@@ -1,21 +1,20 @@
-GD SPARK & BLOOM — V3 WEBSITE PREVIEW (November 2026)
+GD Spark & Bloom — Website V8 preview
 
-Upload the WHOLE unzipped folder to your GitHub Pages repository. Keep all pages, site.js, site.css, and assets/ together. The website currently deployed on GitHub Pages will not update unless you upload these files.
+Deploy all files including the assets/ folder at the root of your GitHub Pages repository. Do not publish the admin demo as a production admin endpoint; it is not authenticated.
 
-CUSTOMER: index.html (short permanent/promo hero + favourite products + WhatsApp enquiry), shop.html (compact catalogue & search), kits.html (products tagged for kits), about.html, contact.html, cart.html, checkout.html (collapsed summary), payment.html (coupon if enabled + transfer + receipt), success.html.
+Changes: 2-stage Delivery → Payment checkout stepper; floating/sticky Back and Continue/Submit controls; ordinary chevrons for expandable sections; list-style mobile menu; compact footer; consistent back button on secondary pages; removed collection eyebrow; sample-labelled Nigerian-English customer feedback carousel, replacing only with genuine consented customer reviews added in admin.
 
-ADMIN DEMO: admin.html and admin-product.html (these are intentionally NOT linked from public navigation).
-- Sidebar menu; Add product has its own page; stock/show/bestseller/kit tags.
-- Coupons: turn the payment coupon field on/off; create whole-order or product-specific discounts; enable/disable each code.
-- Banners: permanent hero stays until manually changed; optional scheduled promotion with start/end and optional countdown temporarily replaces it. When expired, original hero reappears. Sale price badges are separate from banners.
-- Receipts, order statuses and WhatsApp messages are a DEMO.
+All product/order/review/coupon records live in this browser only. Reviews in the demo are illustrative examples until real feedback is uploaded. The checkout is not safe to accept real bank transfers or sensitive customer documents yet. Real order processing requires a server backend, secure admin login, safe receipt storage, and payment verification.
 
-IMPORTANT: This is an entirely client-side preview. It is NOT a secure, real order system, not authenticated, and has no backend. Browser storage is local to the device; an actual vendor does not receive customer orders from another device, and uploaded receipts are not securely transmitted. Do not publish real bank details, process customer data, or take payments using this demo. Production needs private admin authentication, secure order/receipt backend, validation and security testing.
+V9: Herbal-focused Nigerian-English sample quotes (not actual customer testimonials), minimal example heading instead of preview warnings, touch/mouse-swipable card carousel with auto-advance. Genuine feedback entered by admin with consent replaces examples.
 
-Placeholder product photographs, prices and titles are illustrative until the vendor supplies the genuine products.
+V10 REVIEWS: The heading now reads Review. Arrow buttons have been removed. The horizontal carousel continuously moves at 86 px/sec with seamless duplicates and touch/mouse swipe. For demonstration only, sample cards reference piles, hormonal concerns and premature ejaculation with no unverified effectiveness claims; label them as examples until genuine reviews are supplied.
 
-SEO pages now also include faq.html and kits.html. The included sitemap.xml deliberately uses https://example.com as a placeholder; replace it with the final APPROVED live domain/path before submitting to search engines.
+V11 changes: header tagline removed, duplicate top checkout arrows removed; delivery/payment steps spaced; transfer amount card reflowed; a single plus-icon receipt upload label hides browser file input; review sample attributions no longer append the visible word 'Example' in this preview. Sample review text is fictional and must never be published as authentic testimonials.
 
-UI: Header shows WhatsApp, search, shopping bag and hamburger; TikTok is in the menu and footer. Admin arrow in the top-right header was removed. The homepage replaces the oversized promotional text block with a compact hero and a "Send an enquiry" form below the products.
+V12 styling update:
+- Shorter payment tip and explicit condensed demo safety warning.
+- Mustard gold liquid category tabs, cart bag and add-to-cart plus controls.
+- Existing guest checkout, coupon and admin behaviour preserved.
 
-CREDITS: The WhatsApp brand glyph is adapted from the Font Awesome Free Brands artwork (CC BY 4.0). Brand names and marks belong to their respective owners.
+V14 style refinements: The hero Shop now pill, non-black admin quick actions, WhatsApp and cart icon backgrounds, product + buttons, Review Cart secondary actions, cart quantity controls and drawer Review cart CTA now use vivid GD brand yellow (#FFE000) rather than the old mustard-gold. Black primary CTAs remain black. The Add-to-Cart confirmation is simply “Added to cart.”
