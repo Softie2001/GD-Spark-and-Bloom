@@ -1,8 +1,4 @@
 User-agent: *
-Disallow: /admin.html
-Disallow: /admin-product.html
 Disallow: /api/
-Disallow: /cart.html
-Disallow: /checkout.html
-Disallow: /payment.html
-Disallow: /success.html
+
+Sitemap: https://gdsparkandbloom.com.ng/sitemap.xml
