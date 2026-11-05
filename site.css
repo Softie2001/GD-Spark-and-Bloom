@@ -852,3 +852,30 @@ body.gdsb-order-confirm-open{overflow:hidden}
 .gdsb-order-action--danger{color:#9c4634;background:#fffaf9;border-color:#ecd6d0}
 @media(max-width:480px){.gdsb-orders-list{gap:11px}.gdsb-order-summary{padding:15px 13px 12px}.gdsb-order-body{padding:0 13px 13px}.gdsb-order-headline{gap:7px}.gdsb-order-name{font-size:16px}.gdsb-order-status{max-width:51%;font-size:9.5px;padding:5px 8px}.gdsb-order-data-grid{gap:11px 10px}.gdsb-order-action-grid{gap:7px}.gdsb-order-action{padding:10px 7px;min-height:42px}}
 @media(prefers-reduced-motion:reduce){.gdsb-order-chevron{transition:none}.gdsb-order-action:active{transform:none}}
+
+/* GDSB APPROVED GOLD LOGO AND FAVICON -- preserve the entire circular badge */
+.site-header .brand img,
+.footer .brand img,
+.admin-side .brand img {
+  object-fit:contain!important;
+  object-position:center center!important;
+  border:0!important;
+  border-radius:0!important;
+  padding:0!important;
+  background:transparent!important;
+  flex-shrink:0;
+}
+.gdsb-admin-login > img,
+.gdsb-maintenance > img {
+  display:block!important;
+  width:92px!important;
+  height:92px!important;
+  max-width:100%!important;
+  object-fit:contain!important;
+  object-position:center center!important;
+  border:0!important;
+  border-radius:0!important;
+  padding:0!important;
+  background:transparent!important;
+  margin:0 auto 15px!important;
+}
