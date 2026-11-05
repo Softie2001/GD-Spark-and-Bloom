@@ -90,8 +90,11 @@ export default async function handler(req,res){if(method(req,res,['POST']))retur
  case 'order-status':{
   const id=required(payload.id,'Order reference',55),status=String(payload.status);
   const valid=['Pending verification','Payment confirmed','Payment not confirmed','Preparing order','Out for delivery','Delivered','Cancelled'];if(!valid.includes(status))invalid('Unknown status');
-  const old=await rows('gdsb_orders',`select=id,status&reference=eq.${q(id)}&limit=1`);if(!old.length)invalid('Order not found');
-  await patch('gdsb_orders',`reference=eq.${q(id)}`,{status,updated_at:new Date().toISOString()});break
+  const old=await rows('gdsb_orders',`select=id,status,payment_confirmed_at&reference=eq.${q(id)}&limit=1`);if(!old.length)invalid('Order not found');
+  const update={status,updated_at:new Date().toISOString()};
+  if(status==='Payment confirmed'&&!old[0].payment_confirmed_at)update.payment_confirmed_at=new Date().toISOString();
+  if(['Payment not confirmed','Pending verification','Cancelled'].includes(status))update.payment_confirmed_at=null;
+  await patch('gdsb_orders',`reference=eq.${q(id)}`,update);break
  }
  default:invalid('Unsupported admin action');
  }

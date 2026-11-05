@@ -1,9 +1,47 @@
 {
-  "$schema": "https://openapi.vercel.sh/vercel.json",
-  "framework": null,
-  "headers": [
-    {"source":"/admin.html","headers":[{"key":"Cache-Control","value":"no-store"},{"key":"X-Robots-Tag","value":"noindex, nofollow"}]},
-    {"source":"/admin-product.html","headers":[{"key":"Cache-Control","value":"no-store"},{"key":"X-Robots-Tag","value":"noindex, nofollow"}]},
-    {"source":"/api/(.*)","headers":[{"key":"X-Content-Type-Options","value":"nosniff"}]}
-  ]
+    "$schema":  "https://openapi.vercel.sh/vercel.json",
+    "framework":  null,
+    "headers":  [
+                    {
+                        "source":  "/admin.html",
+                        "headers":  [
+                                        {
+                                            "key":  "Cache-Control",
+                                            "value":  "no-store"
+                                        },
+                                        {
+                                            "key":  "X-Robots-Tag",
+                                            "value":  "noindex, nofollow"
+                                        }
+                                    ]
+                    },
+                    {
+                        "source":  "/admin-product.html",
+                        "headers":  [
+                                        {
+                                            "key":  "Cache-Control",
+                                            "value":  "no-store"
+                                        },
+                                        {
+                                            "key":  "X-Robots-Tag",
+                                            "value":  "noindex, nofollow"
+                                        }
+                                    ]
+                    },
+                    {
+                        "source":  "/api/(.*)",
+                        "headers":  [
+                                        {
+                                            "key":  "X-Content-Type-Options",
+                                            "value":  "nosniff"
+                                        }
+                                    ]
+                    }
+                ],
+    "crons":  [
+                  {
+                      "path":  "/api/receipt-cleanup",
+                      "schedule":  "0 3 * * *"
+                  }
+              ]
 }
