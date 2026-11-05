@@ -8,11 +8,19 @@ vm.runInContext(fs.readFileSync('site.js','utf8'),ctx,{timeout:2000});vm.runInCo
 for(let i=0;i<30&&app.innerHTML.indexOf('Herbal Soap')<0;i++)await new Promise(resolve=>setTimeout(resolve,15));
 assert.match(app.innerHTML,/Herbal Soap/);assert.doesNotMatch(app.innerHTML,/Herbal review examples/);assert.match(app.innerHTML,/Shop our kits/);console.log('PASS | cloud catalogue renders, live mode omits fictional reviews, kit/category page retained');
 
-// Published customer reviews must render in the same bounded, looping viewport as the preview.
+// Published reviews render as one-card slides; only two hidden boundary clones are needed.
 vm.runInContext("db.reviews=[{id:'r1',author:'Verified Customer',location:'Lagos',rating:5,text:'Test review',visible:true,consent:true}];render()",ctx,{timeout:2000});
-assert.match(app.innerHTML,/id="review-track-window"/);
-assert.equal((app.innerHTML.match(/class="review-track-group"/g)||[]).length,3);
-assert.equal((app.innerHTML.match(/class="review-card"/g)||[]).length,15,'single review must repeat enough to scroll on desktop');
-assert.ok(!app.innerHTML.includes('class="review-viewport"'),'old unbounded review layout must not return');
+assert.match(app.innerHTML,/id="gdsb-review-slideshow"/);
+assert.match(app.innerHTML,/data-count="1"/);
+assert.equal((app.innerHTML.match(/class="review-card"/g)||[]).length,3);
+assert.ok(!app.innerHTML.includes('id="review-track-window"'),'old marquee not used');
+assert.ok(!app.innerHTML.includes('class="review-viewport"'),'unbounded review layout removed');
 assert.match(app.innerHTML,/Verified Customer/);
-console.log('PASS | live review marquee bounded and replicated for continuous motion');
+vm.runInContext("db.reviews=[{id:'r1',author:'One',text:'First',visible:true,consent:true},{id:'r2',author:'Two',text:'Second',visible:true,consent:true}];render()",ctx,{timeout:2000});
+assert.match(app.innerHTML,/data-count="2"/);
+assert.equal((app.innerHTML.match(/class="review-card"/g)||[]).length,4);
+assert.ok(!app.innerHTML.includes('SAMPLE_REVIEW_COPY'));
+const css=fs.readFileSync('site.css','utf8');
+assert.match(css,/\.gdsb-review-slide-viewport\{[^}]*overflow:hidden/);
+assert.match(css,/\.gdsb-review-slide-track > \.review-card\{[^}]*flex:0 0 100%/);
+console.log('PASS | reviews use one-card swipeable slideshow without horizontal page overflow');

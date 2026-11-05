@@ -883,3 +883,13 @@ body.gdsb-order-confirm-open{overflow:hidden}
 .reviews-section{min-width:0;max-width:100%;overflow:hidden}
 .review-track-window{display:block;width:100%;max-width:100%;min-width:0;overflow-x:auto!important;overflow-y:hidden}
 .gdsb-order-receipt-link svg{width:16px;height:16px;flex:0 0 16px;stroke:currentColor;fill:none}
+
+/* LIVE REVIEW SLIDESHOW — one self-contained card, no horizontal page overflow. */
+.gdsb-review-slideshow{display:block;width:100%;max-width:100%;min-width:0;overflow:hidden;padding:24px 0 28px}
+.gdsb-review-slideshow .review-heading{margin:0 0 16px}
+.gdsb-review-slide-viewport{position:relative;width:min(100%,470px);max-width:100%;min-width:0;overflow:hidden;border-radius:20px;touch-action:pan-y;isolation:isolate}
+.gdsb-review-slide-track{display:flex;flex-wrap:nowrap;align-items:stretch;gap:0;width:100%;min-width:0;max-width:none;will-change:transform;transform:translate3d(0,0,0)}
+.gdsb-review-slide-track > .review-card{flex:0 0 100%;width:100%;max-width:100%;min-width:0;margin:0;box-sizing:border-box;min-height:215px;scroll-snap-align:none!important;scroll-snap-stop:normal!important}
+.gdsb-review-slide-track > .review-card blockquote{overflow-wrap:anywhere}
+@media(max-width:760px){.gdsb-review-slideshow{padding:20px 0 22px}.gdsb-review-slide-viewport{width:100%}}
+@media(prefers-reduced-motion:reduce){.gdsb-review-slide-track{will-change:auto}}

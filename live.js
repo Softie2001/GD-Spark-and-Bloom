@@ -27,10 +27,83 @@ render=function(){
  if(!GDSB_CHECKOUT_READY&&['checkout','payment'].includes(page)){gdsbUnavailable('Online payment is being configured. Please contact the seller on WhatsApp for now.');return}
  if(GDSB_IS_ADMIN&&!GDSB_ADMIN_OK){document.getElementById('app').innerHTML=gdsbAdminLogin();return}
  _gdsbRender();
+ initGdsbReviewSlideshow();
 
  if(GDSB_IS_ADMIN){const logout=document.createElement('button');logout.className='sidebtn';logout.innerHTML=icon('logout')+' Sign out';logout.onclick=gdsbSignOut;document.querySelector('.admin-side')?.append(logout)}
 }
-function reviewsSection(){const arr=(db.reviews||[]).filter(r=>r.visible&&r.consent);if(!arr.length)return '';const originals=arr.map(r=>reviewCard(r,false)).join('');const copies=Math.max(1,Math.ceil(5/arr.length));const duplicates=originals.replaceAll('<article ', '<article aria-hidden="true" ');const group=originals+duplicates.repeat(copies-1);return `<section class="reviews-section" aria-labelledby="reviews-heading"><div class="review-heading"><h2 id="reviews-heading">Review</h2></div><div class="review-track-window" id="review-track-window" tabindex="0" aria-label="Customer reviews; swipe sideways to browse"><div class="review-track">${[0,1,2].map((x)=>`<div class="review-track-group" ${x===1?'':'aria-hidden="true"'}>${group}</div>`).join('')}</div></div></section>`}
+function reviewsSection(){
+  // Only published reviews are shown. Duplicates at both ends make the slide wrap seamlessly.
+  const published=(db.reviews||[]).filter(r=>r.visible&&r.consent);
+  if(!published.length)return '';
+  const slides=[published[published.length-1],...published,published[0]];
+  const cards=slides.map((review,index)=>{
+    const markup=reviewCard(review,false);
+    return (index===0||index===slides.length-1)
+      ? markup.replace('<article ','<article aria-hidden="true" ')
+      : markup;
+  }).join('');
+  return `<section class="reviews-section gdsb-review-slideshow" aria-labelledby="reviews-heading">
+    <div class="review-heading"><h2 id="reviews-heading">Review</h2></div>
+    <div class="gdsb-review-slide-viewport" id="gdsb-review-slideshow" data-count="${published.length}" role="region" aria-roledescription="slideshow" aria-label="Customer reviews">
+      <div class="gdsb-review-slide-track">${cards}</div>
+    </div>
+  </section>`;
+}
+let gdsbSlideshowTimer=0;
+let gdsbSlideshowDispose=()=>{};
+function initGdsbReviewSlideshow(){
+  if(gdsbSlideshowTimer){clearInterval(gdsbSlideshowTimer);gdsbSlideshowTimer=0;}
+  gdsbSlideshowDispose();gdsbSlideshowDispose=()=>{};
+  const viewport=document.getElementById('gdsb-review-slideshow');if(!viewport)return;
+  const track=viewport.querySelector('.gdsb-review-slide-track');
+  const total=Number(viewport.dataset.count)||0;
+  if(!track||total<1)return;
+  const reduced=!!window.matchMedia?.('(prefers-reduced-motion: reduce)')?.matches;
+  let index=1,moving=false,down=null,resetFallback=0;
+  const width=()=>viewport.getBoundingClientRect().width||viewport.clientWidth||0;
+  function paint(animated){
+    const w=width();if(!w)return;
+    track.style.transition=animated?'transform 600ms cubic-bezier(.22,.61,.36,1)':'none';
+    track.style.transform='translate3d('+(-index*w)+'px,0,0)';
+  }
+  function finish(){
+    if(resetFallback){clearTimeout(resetFallback);resetFallback=0;}
+    if(index===total+1){index=1;paint(false);}
+    else if(index===0){index=total;paint(false);}
+    moving=false;
+  }
+  function change(direction){
+    if(moving||document.hidden)return;
+    moving=true;index+=direction;paint(!reduced);
+    if(reduced)finish();
+    else resetFallback=setTimeout(finish,720);
+  }
+  function onEnd(event){if(event.target===track&&event.propertyName==='transform')finish();}
+  function onDown(event){if(event.button!==undefined&&event.button!==0)return;down={x:event.clientX,y:event.clientY};}
+  function onUp(event){
+    if(!down)return;
+    const dx=event.clientX-down.x,dy=event.clientY-down.y;
+    down=null;
+    if(Math.abs(dx)>45&&Math.abs(dx)>Math.abs(dy))change(dx<0?1:-1);
+  }
+  function onCancel(){down=null;}
+  function onResize(){paint(false);}
+  track.addEventListener('transitionend',onEnd);
+  viewport.addEventListener('pointerdown',onDown);
+  viewport.addEventListener('pointerup',onUp);
+  viewport.addEventListener('pointercancel',onCancel);
+  window.addEventListener('resize',onResize);
+  paint(false);
+  if(!reduced)gdsbSlideshowTimer=setInterval(()=>{if(!down)change(1);},4200);
+  gdsbSlideshowDispose=()=>{
+    track.removeEventListener('transitionend',onEnd);
+    viewport.removeEventListener('pointerdown',onDown);
+    viewport.removeEventListener('pointerup',onUp);
+    viewport.removeEventListener('pointercancel',onCancel);
+    window.removeEventListener('resize',onResize);
+    if(resetFallback)clearTimeout(resetFallback);
+  };
+}
 
 function discountTotal(){if(GDSB_LIVE_READY)return GDSB_COUPON_RESULT?.discount||0;return 0}
 function couponObj(){return GDSB_COUPON_RESULT?.couponCode?{code:GDSB_COUPON_RESULT.couponCode,active:true,scope:'all'}:null}
