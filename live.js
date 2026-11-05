@@ -162,7 +162,33 @@ function successPage(){const o=JSON.parse(sessionStorage.getItem('gdsb_order_res
 async function gdsbWrite(action,payload){try{await gdsbApi('admin/mutate',{method:'POST',body:JSON.stringify({action,payload})});await gdsbLoadAdmin();toast('Saved');return true}catch(error){toast(error.message);return false}}
 function toggleProd(id,key){gdsbWrite('product-toggle',{id,key})}
 function deleteProd(id){if(confirm('Delete this product?'))gdsbWrite('product-delete',{id})}
-async function gdsbUploaded(f){if(!f||!f.size)return '';return await fileData(f)}
+// Only signed-in store admins may request an upload signature. Images bypass the
+// 4.5 MB Vercel request cap by uploading directly to the existing Cloudinary account.
+async function gdsbUploaded(f){
+ if(!f||!f.size)return '';
+ const allowed=['image/png','image/jpeg','image/webp'];
+ const maxBytes=5*1024*1024;
+ if(!allowed.includes(f.type))throw Error('Select a JPG, PNG or WebP image');
+ if(f.size>maxBytes)throw Error('Image must be 5 MB or smaller');
+ const ticket=await gdsbApi('admin/upload-signature',{method:'POST'});
+ if(ticket.maxBytes!==maxBytes||!ticket.cloud||!ticket.apiKey||!ticket.signature)throw Error('Image upload is not configured');
+ const form=new FormData();
+ form.append('file',f);
+ form.append('api_key',ticket.apiKey);
+ form.append('folder',ticket.folder);
+ form.append('public_id',ticket.publicId);
+ form.append('timestamp',String(ticket.timestamp));
+ form.append('signature',ticket.signature);
+ const response=await fetch('https://api.cloudinary.com/v1_1/'+encodeURIComponent(ticket.cloud)+'/image/upload',{method:'POST',body:form});
+ const asset=await response.json().catch(()=>({}));
+ if(!response.ok)throw Error(asset.error?.message||'Image upload failed. Please retry');
+ if(asset.resource_type!=='image'||!['jpg','jpeg','png','webp'].includes(asset.format)||
+    !Number.isInteger(asset.bytes)||asset.bytes<1||asset.bytes>maxBytes||
+    typeof asset.public_id!=='string'||!asset.public_id.startsWith(ticket.folder+'/')||
+    typeof asset.secure_url!=='string'||!asset.secure_url.startsWith('https://res.cloudinary.com/'+ticket.cloud+'/image/upload/'))
+    throw Error('Image storage returned an invalid image');
+ return asset.secure_url;
+}
 saveProduct=async function(e){e.preventDefault();try{
  const d=new FormData(e.target);const upload=await gdsbUploaded(d.get('imageUpload'));
  const payload={id:editing||undefined,name:d.get('name'),category:d.get('category'),description:d.get('description'),price:Number(d.get('price')),salePrice:Number(d.get('salePrice')||0),stock:d.has('stock'),bestseller:d.has('bestseller'),kit:d.has('kit'),hidden:d.has('hidden'),image:upload||d.get('image')||''};
