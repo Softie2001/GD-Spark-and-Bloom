@@ -2,6 +2,7 @@
    Runs only after site.js and never exposes the server secret or Resend key. */
 'use strict';
 let GDSB_LIVE_READY=false, GDSB_CHECKOUT_READY=false, GDSB_ADMIN_OK=false, GDSB_AUTH_TOKEN=sessionStorage.getItem('gdsb_admin_token')||'', GDSB_COUPON_RESULT=null;
+let GDSB_ORDER_SUBMITTING=false;
 const GDSB_IS_ADMIN=['admin','admin-product'].includes(page);
 const GDSB_ORIGINAL={render,submitOrder,applyCoupon,changeQty,removeLineItem,saveProduct,saveHeroBanner,savePromoBanner,saveCoupon,saveBank,saveReview};
 async function gdsbApi(path,options={}){
@@ -44,15 +45,49 @@ changeQty=function(id,d){GDSB_ORIGINAL.changeQty(id,d);if(couponApplied)gdsbRefr
 removeLineItem=function(id){GDSB_ORIGINAL.removeLineItem(id);if(couponApplied)gdsbRefreshQuote()};
 
 // Server receipt upload (private Supabase bucket), authenticated bot token and verified prices.
-submitOrder=async function(e){e.preventDefault();if(!receiptData)return toast('Add your receipt first');
- const btn=e.submitter||e.target.querySelector('button[type="submit"]');if(btn)btn.disabled=true;
+submitOrder=async function(e){e.preventDefault();if(GDSB_ORDER_SUBMITTING)return;if(!receiptData)return toast('Add your receipt first');GDSB_ORDER_SUBMITTING=true;
+ const btn=e.submitter||document.querySelector('button[form="payment-form"][type="submit"]');if(btn)btn.disabled=true;
  try{
   const customer=JSON.parse(sessionStorage.getItem('gdsb_customer')||'null');if(!customer)throw Error('Enter delivery information first');
   const sent=await gdsbApi('orders',{method:'POST',body:JSON.stringify({reference:orderReference(),customer,items:cartLines().map(({p,qty})=>({id:p.id,qty})),coupon:couponApplied||'',receipt:receiptData,website:e.target.elements?.namedItem('website')?.value||''})});
   const result={id:sent.reference,total:sent.total,status:sent.status};sessionStorage.setItem('gdsb_last_order',sent.reference);sessionStorage.setItem('gdsb_order_result',JSON.stringify(result));
-  cart={};cartSave();clearCoupon();receiptData='';sessionStorage.removeItem('gdsb_customer');sessionStorage.removeItem('gdsb_pending_order');location.href='success.html';
- }catch(err){toast(err.message);if(btn)btn.disabled=false}
+  cart={};cartSave();clearCoupon();receiptData='';sessionStorage.removeItem('gdsb_customer');sessionStorage.removeItem('gdsb_pending_order');try{gdsbShowOrderSuccess(result)}catch(uiError){console.error('Order saved, confirmation display failed',uiError);location.href='success.html'}
+ }catch(err){GDSB_ORDER_SUBMITTING=false;toast(err.message);if(btn)btn.disabled=false}
 };
+
+// The order has already been saved by /api/orders. This sheet confirms receipt
+// without another request or navigation; dismissing it returns to the shop.
+function gdsbShowOrderSuccess(order){
+  if(!order||!/^GD-[A-Z0-9-]{8,48}$/.test(order.id))throw Error('Invalid order reference');
+  document.querySelector('.gdsb-order-confirm-overlay')?.remove();
+  document.querySelector('.checkout-action-bar')?.remove();
+  const sheet=document.createElement('div');
+  sheet.className='gdsb-order-confirm-overlay';
+  sheet.innerHTML=`<section class="gdsb-order-confirm-sheet" role="dialog" aria-modal="true" aria-labelledby="gdsb-order-confirm-title">
+    <span class="gdsb-order-confirm-handle" aria-hidden="true"></span>
+    <div class="gdsb-order-confirm-header"><span>Order submitted</span><button type="button" class="gdsb-order-confirm-close" onclick="gdsbCloseOrderSuccess()" aria-label="Close confirmation">&times;</button></div>
+    <div class="gdsb-order-confirm-body">
+      <div class="gdsb-order-confirm-check" aria-hidden="true">${icon('check')}</div>
+      <h2 id="gdsb-order-confirm-title">Thank you for your order!</h2>
+      <p>We received your order and receipt. Payment is awaiting verification.</p>
+      <div class="gdsb-order-confirm-reference"><div><small>Your order number</small><strong>${esc(order.id)}</strong></div><button type="button" data-order="${esc(order.id)}" onclick="gdsbCopyOrderNumber(this)" aria-label="Copy order number">${icon('copy')} <span>Copy</span></button></div>
+      <p class="gdsb-order-confirm-next">We will update you on WhatsApp after verification.</p>
+      <button type="button" class="gdsb-order-confirm-done" onclick="gdsbCloseOrderSuccess()">Continue shopping</button>
+    </div>
+  </section>`;
+  document.body.appendChild(sheet);
+  document.body.classList.add('gdsb-order-confirm-open');
+  sheet.querySelector('.gdsb-order-confirm-close')?.focus({preventScroll:true});
+}
+async function gdsbCopyOrderNumber(button){
+  try{await navigator.clipboard.writeText(button.dataset.order);const span=button.querySelector('span');if(span){span.textContent='Copied';setTimeout(()=>{if(span.isConnected)span.textContent='Copy'},1700)}}
+  catch{toast('Please copy the order number manually')}
+}
+function gdsbCloseOrderSuccess(){
+  document.body.classList.remove('gdsb-order-confirm-open');
+  location.href='index.html';
+}
+
 function successPage(){const o=JSON.parse(sessionStorage.getItem('gdsb_order_result')||'null');return `<main class="page wrap"><div class="card" style="max-width:640px;margin:auto;text-align:center"><h1>Order received</h1><p>Order reference: <b>${esc(o?.id||'')}</b></p><p>Your receipt is awaiting manual verification. This does not confirm that the transfer was received.</p><p>Delivery details and charges are discussed with the vendor on WhatsApp.</p><button class="btn btn-primary" onclick="wa('Hello GD Spark & Bloom, I just submitted order ${esc(o?.id||'')} for ${fmt(o?.total||0)}. Please check my payment receipt.')">Message seller</button><p><a href="index.html">Continue shopping</a></p></div></main>`}
 async function gdsbWrite(action,payload){try{await gdsbApi('admin/mutate',{method:'POST',body:JSON.stringify({action,payload})});await gdsbLoadAdmin();toast('Saved');return true}catch(error){toast(error.message);return false}}
 function toggleProd(id,key){gdsbWrite('product-toggle',{id,key})}

@@ -765,3 +765,29 @@ body{font-size:16px;line-height:1.55}
 @media(max-width:650px){.gdsb-about-page.page{padding-top:10px;padding-bottom:48px}.gdsb-about-page .gdsb-about-hero{grid-template-columns:minmax(0,1fr);gap:21px;margin:16px 0 50px;padding:13px;border-radius:20px}.gdsb-about-portrait{border-radius:14px}.gdsb-about-portrait img{aspect-ratio:4/4.3;object-position:center 35%}.gdsb-about-intro{padding:4px 6px 15px}.gdsb-about-page h1{font-size:clamp(31px,8vw,41px);margin:12px 0 17px}.gdsb-about-page p{font-size:14px;line-height:1.75}.gdsb-about-page .gdsb-about-lead{font-size:17px}.gdsb-about-section{margin-bottom:49px}.gdsb-about-two,.gdsb-about-goals{grid-template-columns:1fr;gap:12px}.gdsb-about-challenges{padding:23px 18px;border-radius:20px}.gdsb-about-three{gap:12px}.gdsb-about-feature{padding:23px}.gdsb-about-goals{gap:10px}.gdsb-about-bottom{align-items:stretch;flex-direction:column;padding:23px 19px}.gdsb-about-bottom .btn{width:100%}.gdsb-about-actions{gap:17px}.gdsb-about-actions .btn{width:100%}}
 
 /* GDSB checkout copy and spacing */ .checkout-page>h1{margin-bottom:6px}.checkout-page .checkout-intro{margin:0 0 12px;line-height:1.5;font-size:14px;color:#625a49}.checkout-page .checkout-stepper{margin-top:8px;margin-bottom:12px}.checkout-page .order-details{margin-top:0;margin-bottom:12px}.checkout-page .checkout-delivery-notice{margin:0 0 14px}.checkout-page #delivery-form{margin-top:0}@media(max-width:760px){.checkout-page .checkout-stepper{margin:8px -18px 12px}.checkout-page .order-details{margin:0 0 12px}.checkout-page .checkout-delivery-notice{margin-bottom:12px}}
+
+/* GD Spark & Bloom: compact post-order confirmation bottom sheet. */
+body.gdsb-order-confirm-open{overflow:hidden}
+.gdsb-order-confirm-overlay{position:fixed;inset:0;z-index:9999;display:flex;justify-content:center;align-items:flex-end;background:rgba(17,18,14,.36);padding:0 10px;overscroll-behavior:contain}
+.gdsb-order-confirm-sheet{width:min(100%,480px);max-height:86vh;max-height:86dvh;overflow-y:auto;background:#fffefa;border:1px solid #e7dcc1;border-bottom:0;border-radius:26px 26px 0 0;box-shadow:0 -18px 55px rgba(15,17,13,.18);padding:10px 22px calc(22px + env(safe-area-inset-bottom));color:#151713;animation:gdsb-order-sheet-up .27s ease-out both}
+.gdsb-order-confirm-handle{display:block;width:40px;height:4px;background:#d6d0c3;border-radius:5px;margin:0 auto 12px}
+.gdsb-order-confirm-header{display:flex;justify-content:space-between;align-items:center;gap:12px;border-bottom:1px solid #eee7d8;padding-bottom:11px;font-size:15px;font-weight:800}
+.gdsb-order-confirm-close{width:34px;height:34px;flex-shrink:0;background:transparent;color:#555;display:grid;place-items:center;border:0;border-radius:50%;font-size:23px;cursor:pointer}
+.gdsb-order-confirm-close:focus-visible,.gdsb-order-confirm-reference button:focus-visible,.gdsb-order-confirm-done:focus-visible{outline:3px solid #d6a800;outline-offset:3px}
+.gdsb-order-confirm-body{text-align:center;padding-top:18px}
+.gdsb-order-confirm-check{display:grid;place-items:center;background:#fff2af;color:#141713;border:1px solid #f1da74;border-radius:50%;width:66px;height:66px;margin:0 auto 15px}
+.gdsb-order-confirm-check svg{width:30px;height:30px;stroke-width:2.8}
+.gdsb-order-confirm-body h2{font:800 clamp(20px,5vw,24px)/1.2 Manrope,'DM Sans',sans-serif;letter-spacing:-.04em;margin:0 0 8px;color:#151713}
+.gdsb-order-confirm-body>p{font-size:13px;line-height:1.6;color:#5d5b54;max-width:330px;margin:0 auto 17px}
+.gdsb-order-confirm-reference{background:#fff9e3;border:1px dashed #d7b946;border-radius:15px;padding:13px 14px;display:flex;align-items:center;gap:12px;justify-content:space-between;text-align:left;margin:0 auto 14px;min-width:0}
+.gdsb-order-confirm-reference>div{min-width:0;display:flex;flex-direction:column;gap:3px}
+.gdsb-order-confirm-reference small{font-size:11px;line-height:1.3;color:#70664c}
+.gdsb-order-confirm-reference strong{font-size:16px;line-height:1.4;font-weight:800;color:#1d1e19;overflow-wrap:anywhere;letter-spacing:.01em}
+.gdsb-order-confirm-reference button{display:inline-flex;align-items:center;justify-content:center;gap:6px;flex:0 0 auto;border:1px solid #d7c58b;border-radius:10px;background:white;padding:9px 11px;font-size:12px;font-weight:800;cursor:pointer;color:#1b1d19}
+.gdsb-order-confirm-reference button svg{height:15px;width:15px}
+.gdsb-order-confirm-body>p.gdsb-order-confirm-next{font-size:12px;margin-bottom:16px}
+.gdsb-order-confirm-done{display:block;width:100%;border:0;border-radius:13px;background:#161815;color:white;min-height:46px;padding:11px 16px;font-weight:800;font-size:13px;cursor:pointer}
+.gdsb-order-confirm-done:hover{background:#34372f}
+@keyframes gdsb-order-sheet-up{from{transform:translateY(34px);opacity:.7}to{transform:translateY(0);opacity:1}}
+@media(max-width:600px){.gdsb-order-confirm-overlay{padding:0}.gdsb-order-confirm-sheet{width:100%;padding:9px 20px calc(18px + env(safe-area-inset-bottom))}.gdsb-order-confirm-body{padding-top:15px}.gdsb-order-confirm-check{width:60px;height:60px;margin-bottom:13px}}
+@media(prefers-reduced-motion:reduce){.gdsb-order-confirm-sheet{animation:none}}
