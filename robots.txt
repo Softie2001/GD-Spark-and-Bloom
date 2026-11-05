@@ -5,3 +5,4 @@ Allow: /api/catalog
 Disallow: /api/
 
 Sitemap: https://gdsparkandbloom.com.ng/sitemap.xml
+Sitemap: https://gdsparkandbloom.com.ng/product-sitemap.xml
