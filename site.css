@@ -383,7 +383,7 @@ body{font-size:16px;line-height:1.55}
 .checkout-step.active{color:#141611}.checkout-step.active .step-circle{color:#12130f;border-color:#eacb73;background:#ffe9a2}
 .checkout-step.done .step-circle{border-color:#c8a73b;background:#fff4c6;color:#171914}.checkout-step.done .step-circle svg{width:15px;height:15px}
 .step-connector{width:42px;max-width:9vw;height:2px;background:#d5d1c0;flex-shrink:1}.checkout-step.done+.step-connector{background:#d1b24f}
-.checkout-page,.payment-page{padding-bottom:calc(152px + env(safe-area-inset-bottom))!important;max-width:800px}
+.checkout-page,.payment-page{padding-bottom:calc(80px + env(safe-area-inset-bottom))!important;max-width:800px}
 .checkout-action-bar{position:fixed;bottom:0;left:0;right:0;background:#fffef9;z-index:45;border-top:1px solid #ded8c6;box-shadow:0 -9px 28px #15151316;padding:12px max(18px,calc((100vw - 800px)/2)) calc(12px + env(safe-area-inset-bottom));display:flex;gap:12px;align-items:stretch;justify-content:center}
 .checkout-action-bar button{border-radius:13px;min-height:52px;display:inline-flex;justify-content:center;align-items:center;gap:9px;font-size:14px;font-weight:800;line-height:1.3;padding:12px 17px}
 .checkout-action-bar svg{height:19px;width:19px;flex-shrink:0}
