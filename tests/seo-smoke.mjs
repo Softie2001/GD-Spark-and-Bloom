@@ -47,3 +47,29 @@ for(const [alias,html] of [['/admin','/admin.html'],['/admin-product','/admin-pr
  assert.ok(rule?.headers.some(h=>h.key.toLowerCase()==='cache-control'&&h.value==='no-store'),'Missing no-store on '+alias);
 }
 console.log('PASS | clean admin aliases are private and uncached');
+
+
+const ldJson=(html)=>[...html.matchAll(/<script type="application\/ld\+json">([\s\S]*?)<\/script>/g)].map(m=>JSON.parse(m[1]));
+const home=fs.readFileSync('index.html','utf8');
+const homeGraph=ldJson(home).flatMap(x=>x['@graph']||[x]);
+const store=homeGraph.find(x=>x['@type']==='OnlineStore');
+const website=homeGraph.find(x=>x['@type']==='WebSite');
+assert.ok(store&&website,'OnlineStore and WebSite JSON-LD must exist');
+assert.equal(store.url,origin+'/');
+assert.equal(store.logo,origin+'/assets/gdsb-logo.png');
+assert.ok(store.sameAs.includes('https://www.instagram.com/gdsparkandbloom/'));
+assert.equal(website.publisher['@id'],store['@id']);
+assert.equal(website.inLanguage,'en-NG');
+for(const file of publicPages){
+ const html=fs.readFileSync(file,'utf8');
+ assert.ok(html.includes('<meta property="og:locale" content="en_NG">'),'Missing Nigerian social locale '+file);
+ const schemas=ldJson(html);
+ assert.equal(schemas.length,1,'Expected exactly one validated JSON-LD block in '+file);
+ if(file==='index.html')continue;
+ const bread=schemas[0];
+ assert.equal(bread['@type'],'BreadcrumbList');
+ assert.equal(bread.itemListElement.length,2);
+ assert.equal(bread.itemListElement[0].item,origin+'/');
+ assert.equal(bread.itemListElement[1].item,origin+'/'+file);
+}
+console.log('PASS | OnlineStore, WebSite and six BreadcrumbList schemas valid; social locale en_NG');
