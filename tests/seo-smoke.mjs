@@ -73,3 +73,25 @@ for(const file of publicPages){
  assert.equal(bread.itemListElement[1].item,origin+'/'+file);
 }
 console.log('PASS | OnlineStore, WebSite and six BreadcrumbList schemas valid; social locale en_NG');
+
+
+/* Googlebot needs to fetch public JSON APIs to render the genuine product catalogue. */
+assert.match(robots,/^Allow: \/api\/config$/m);
+assert.match(robots,/^Allow: \/api\/catalog$/m);
+assert.match(robots,/^Disallow: \/api\/$/m);
+const crawlRules=robots.split(/\r?\n/).map(line=>line.match(/^(Allow|Disallow):\s*(\S+)/)).filter(Boolean).map(m=>({rule:m[1],pattern:m[2]}));
+function robotsAllows(path){
+ const matches=crawlRules.filter(r=>path.startsWith(r.pattern));
+ matches.sort((a,b)=>b.pattern.length-a.pattern.length||Number(b.rule==='Allow')-Number(a.rule==='Allow'));
+ return !matches.length||matches[0].rule==='Allow';
+}
+for(const path of ['/api/config','/api/catalog','/api/catalog?preview=1']){
+ assert.ok(robotsAllows(path),'Storefront rendering endpoint blocked: '+path);
+}
+for(const path of ['/api/admin/state','/api/orders','/api/receipt-cleanup']){
+ assert.ok(!robotsAllows(path),'Private API accidentally crawlable: '+path);
+}
+const apiHeaders=config.headers.find(h=>h.source==='/api/(.*)')?.headers||[];
+assert.ok(apiHeaders.some(h=>h.key.toLowerCase()==='x-robots-tag'&&h.value.includes('noindex')),'JSON API noindex header missing');
+assert.ok(apiHeaders.some(h=>h.key.toLowerCase()==='x-content-type-options'&&h.value==='nosniff'),'API nosniff header lost');
+console.log('PASS | Googlebot can fetch public catalogue and config; private APIs remain robots-disallowed; JSON API responses noindex');

@@ -1,4 +1,7 @@
 User-agent: *
+# Public APIs are needed to render the actual product catalogue for Googlebot.
+Allow: /api/config
+Allow: /api/catalog
 Disallow: /api/
 
 Sitemap: https://gdsparkandbloom.com.ng/sitemap.xml
