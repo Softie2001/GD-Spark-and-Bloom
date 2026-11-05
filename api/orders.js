@@ -1,12 +1,11 @@
-import {configured,body,method,onError,fail,required,tidy,checkPhone,decodeImage,uploadImage,newOrderRef,rows,add,patch,remove,q,sendAdminMail,verifyBot,deleteReceipt} from '../lib/server.js';
+import {configured,body,method,onError,fail,required,tidy,checkPhone,decodeImage,uploadImage,newOrderRef,rows,add,patch,remove,q,sendAdminMail,deleteReceipt} from '../lib/server.js';
 import {quote,settings} from '../lib/shop.js';
 import {randomUUID} from 'node:crypto';
 
 export default async function handler(req,res){if(method(req,res,['POST']))return;if(!configured())return fail(res,503,'Store setup in progress');
- if(!process.env.TURNSTILE_SECRET_KEY)return fail(res,503,'Order protection is not configured yet');
  let receiptPath,orderId;
  try{
-  const d=body(req);const bot=await verifyBot(req,d.turnstileToken);if(!bot)return fail(res,400,'Security check failed. Please try again.');
+  const d=body(req);if(typeof d.website==='string'&&d.website.trim())return fail(res,400,'Order could not be submitted. Please try again.');
   const customer=d.customer||{};
   const c={customer_name:required(customer.name,'Name',100),whatsapp:checkPhone(customer.phone),delivery_state:required(customer.state,'State',70),city:required(customer.city,'City',90),delivery_address:required(customer.address,'Delivery address',250),note:tidy(customer.note,500)};
   // All prices and discount eligibility are recalculated on the server, never trusted from the browser.

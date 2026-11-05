@@ -1,7 +1,7 @@
 /* GD Spark & Bloom — Vercel/Supabase connection layer.
    Runs only after site.js and never exposes the server secret or Resend key. */
 'use strict';
-let GDSB_LIVE_READY=false, GDSB_CHECKOUT_READY=false, GDSB_ADMIN_OK=false, GDSB_AUTH_TOKEN=sessionStorage.getItem('gdsb_admin_token')||'', GDSB_COUPON_RESULT=null, GDSB_TURNSTILE_ID=null, GDSB_TURNSTILE_SITEKEY='';
+let GDSB_LIVE_READY=false, GDSB_CHECKOUT_READY=false, GDSB_ADMIN_OK=false, GDSB_AUTH_TOKEN=sessionStorage.getItem('gdsb_admin_token')||'', GDSB_COUPON_RESULT=null;
 const GDSB_IS_ADMIN=['admin','admin-product'].includes(page);
 const GDSB_ORIGINAL={render,submitOrder,applyCoupon,changeQty,removeLineItem,saveProduct,saveHeroBanner,savePromoBanner,saveCoupon,saveBank,saveReview};
 async function gdsbApi(path,options={}){
@@ -26,7 +26,7 @@ render=function(){
  if(!GDSB_CHECKOUT_READY&&['checkout','payment'].includes(page)){gdsbUnavailable('Online payment is being configured. Please contact the seller on WhatsApp for now.');return}
  if(GDSB_IS_ADMIN&&!GDSB_ADMIN_OK){document.getElementById('app').innerHTML=gdsbAdminLogin();return}
  _gdsbRender();
- if(page==='payment')gdsbInsertTurnstile();
+
  if(GDSB_IS_ADMIN){const logout=document.createElement('button');logout.className='sidebtn';logout.innerHTML=icon('logout')+' Sign out';logout.onclick=gdsbSignOut;document.querySelector('.admin-side')?.append(logout)}
 }
 function reviewsSection(){
@@ -48,14 +48,12 @@ submitOrder=async function(e){e.preventDefault();if(!receiptData)return toast('A
  const btn=e.submitter||e.target.querySelector('button[type="submit"]');if(btn)btn.disabled=true;
  try{
   const customer=JSON.parse(sessionStorage.getItem('gdsb_customer')||'null');if(!customer)throw Error('Enter delivery information first');
-  const turnstileToken=await gdsbCheckoutToken();
-  const sent=await gdsbApi('orders',{method:'POST',body:JSON.stringify({reference:orderReference(),customer,items:cartLines().map(({p,qty})=>({id:p.id,qty})),coupon:couponApplied||'',receipt:receiptData,turnstileToken})});
+  const sent=await gdsbApi('orders',{method:'POST',body:JSON.stringify({reference:orderReference(),customer,items:cartLines().map(({p,qty})=>({id:p.id,qty})),coupon:couponApplied||'',receipt:receiptData,website:e.target.elements?.namedItem('website')?.value||''})});
   const result={id:sent.reference,total:sent.total,status:sent.status};sessionStorage.setItem('gdsb_last_order',sent.reference);sessionStorage.setItem('gdsb_order_result',JSON.stringify(result));
   cart={};cartSave();clearCoupon();receiptData='';sessionStorage.removeItem('gdsb_customer');sessionStorage.removeItem('gdsb_pending_order');location.href='success.html';
- }catch(err){toast(err.message);if(window.turnstile&&GDSB_TURNSTILE_ID!==null)window.turnstile.reset(GDSB_TURNSTILE_ID);if(btn)btn.disabled=false}
+ }catch(err){toast(err.message);if(btn)btn.disabled=false}
 };
 function successPage(){const o=JSON.parse(sessionStorage.getItem('gdsb_order_result')||'null');return `<main class="page wrap"><div class="card" style="max-width:640px;margin:auto;text-align:center"><h1>Order received</h1><p>Order reference: <b>${esc(o?.id||'')}</b></p><p>Your receipt is awaiting manual verification. This does not confirm that the transfer was received.</p><p>Delivery details and charges are discussed with the vendor on WhatsApp.</p><button class="btn btn-primary" onclick="wa('Hello GD Spark & Bloom, I just submitted order ${esc(o?.id||'')} for ${fmt(o?.total||0)}. Please check my payment receipt.')">Message seller</button><p><a href="index.html">Continue shopping</a></p></div></main>`}
-async function gdsbCheckoutToken(){for(let i=0;i<32;i++){if(window.turnstile&&GDSB_TURNSTILE_ID!==null){const value=window.turnstile.getResponse(GDSB_TURNSTILE_ID);if(value)return value;}await new Promise(done=>setTimeout(done,500));}throw Error(`Browser verification could not complete. Try again, or contact us on WhatsApp.`)} function gdsbInsertTurnstile(){if(!GDSB_TURNSTILE_SITEKEY)return;const form=document.querySelector(`.payment-page form`);if(!form||form.querySelector(`.gdsb-captcha`))return;const box=document.createElement(`div`);box.className=`gdsb-captcha`;box.setAttribute(`aria-label`,`Checkout security`);form.appendChild(box);const note=document.createElement(`p`);note.hidden=true;note.style.cssText=`font-size:13px;line-height:1.5;color:#6c4036;margin:10px 0`;note.appendChild(document.createTextNode(`Browser verification could not complete. Try again or `));const wa=document.createElement(`a`);wa.href=`https://wa.me/`+WA;wa.textContent=`order through WhatsApp`;wa.target=`_blank`;wa.rel=`noopener noreferrer`;note.appendChild(wa);form.appendChild(note);function draw(){if(!window.turnstile)return;try{GDSB_TURNSTILE_ID=window.turnstile.render(box,{sitekey:GDSB_TURNSTILE_SITEKEY,theme:`light`,appearance:`interaction-only`,retry:`auto`,[`error-callback`]:function(code){console.warn(`GDSB checkout verification error`,code);box.dataset.failures=String(Number(box.dataset.failures||0)+1);if(Number(box.dataset.failures)<=2)return false;note.hidden=false;return true},callback:function(){note.hidden=true;}})}catch(e){console.warn(`Checkout security could not start`);note.hidden=false}}if(window.turnstile)draw();else{const s=document.createElement(`script`);s.src=`https://challenges.cloudflare.com/turnstile/v0/api.js?render=explicit`;s.async=true;s.onload=draw;s.onerror=()=>{note.hidden=false};document.head.appendChild(s)}}
 async function gdsbWrite(action,payload){try{await gdsbApi('admin/mutate',{method:'POST',body:JSON.stringify({action,payload})});await gdsbLoadAdmin();toast('Saved');return true}catch(error){toast(error.message);return false}}
 function toggleProd(id,key){gdsbWrite('product-toggle',{id,key})}
 function deleteProd(id){if(confirm('Delete this product?'))gdsbWrite('product-delete',{id})}
@@ -82,7 +80,7 @@ function setOrderStatus(id,status,withWhatsapp){const target=db.orders.find(o=>o
 
 async function gdsbBootstrap(){
  try{
-  const config=await gdsbApi('config');GDSB_TURNSTILE_SITEKEY=config.turnstileSiteKey||'';GDSB_CHECKOUT_READY=!!config.checkoutReady;
+  const config=await gdsbApi('config');GDSB_CHECKOUT_READY=!!config.checkoutReady;
   if(!config.ready){gdsbUnavailable();return}GDSB_LIVE_READY=true;
   if(GDSB_IS_ADMIN){if(GDSB_AUTH_TOKEN){try{await gdsbLoadAdmin()}catch{GDSB_AUTH_TOKEN='';sessionStorage.removeItem('gdsb_admin_token');render()}}else render();return}
   const d=await gdsbApi('catalog');Object.assign(db,d);db.orders=[];db.coupons=[];db.reviews=d.reviews||[];

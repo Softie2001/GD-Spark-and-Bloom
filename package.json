@@ -3,6 +3,6 @@
   "version":"1.0.0",
   "private":true,
   "type":"module",
-  "scripts":{"check":"node --check site.js && node --check live.js && node --check lib/server.js && node --check api/orders.js && node --check api/admin/mutate.js", "test":"node tests/smoke.mjs && node tests/frontend-smoke.mjs && node tests/cloudinary-resend-smoke.mjs"},
+  "scripts":{"check":"node --check site.js && node --check live.js && node --check lib/server.js && node --check api/orders.js && node --check api/admin/mutate.js", "test":"node tests/smoke.mjs && node tests/frontend-smoke.mjs && node tests/cloudinary-resend-smoke.mjs && node tests/no-challenge-checkout-smoke.mjs"},
   "engines":{"node":">=20"}
 }
