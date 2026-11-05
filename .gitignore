@@ -1,0 +1,11 @@
+# Runtime credentials. Only .env.example belongs in source control.
+.env
+.env.*
+!.env.example
+.vercel/
+node_modules/
+.DS_Store
+*.log
+*.local
+*.pem
+*.key

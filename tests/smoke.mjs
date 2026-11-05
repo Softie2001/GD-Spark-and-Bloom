@@ -1,0 +1,28 @@
+import assert from 'node:assert/strict';
+import {quote} from '../lib/shop.js';
+import {decodeImage} from '../lib/server.js';
+process.env.SUPABASE_URL='https://example.supabase.co';
+process.env.SUPABASE_SERVICE_ROLE_KEY='eyJtesting';
+process.env.SUPABASE_ANON_KEY='eyJtesting';
+const products=[{id:'p1',name:'Herbal Product',price:10000,sale_price:8000,in_stock:true,hidden:false},{id:'p2',name:'Available Kit',price:15000,sale_price:null,in_stock:true,hidden:false},{id:'p3',name:'Hidden',price:1000,sale_price:null,in_stock:true,hidden:true}];
+const coupons=[{code:'BLOOM20',discount_type:'percent',value:20,scope:'product',product_id:'p1',enabled:true},{code:'ALL500',discount_type:'fixed',value:500,scope:'all',product_id:null,enabled:true}];
+const setting=[{id:1,coupon_entry_enabled:true,account_name:'Test',bank_name:'Test',account_number:'1234567890'}];
+const calls=[];
+globalThis.fetch=async function(url,opts={}){
+ const u=new URL(url);calls.push({path:u.pathname,headers:opts.headers||{}});
+ let data=[];
+ if(u.pathname==='/rest/v1/gdsb_products')data=products;
+ if(u.pathname==='/rest/v1/gdsb_settings')data=setting;
+ if(u.pathname==='/rest/v1/gdsb_coupons')data=coupons.filter(c=>c.code===u.searchParams.get('code').replace(/^eq\./,''));
+ return {ok:true,status:200,text:async()=>JSON.stringify(data)};
+};
+let q=await quote({items:[{id:'p1',qty:2},{id:'p2',qty:1}],coupon:'BLOOM20'});
+assert.equal(q.subtotal,31000);assert.equal(q.discount,3200);assert.equal(q.total,27800);
+let x=await quote({items:[{id:'p1',qty:1}],coupon:'ALL500'});
+assert.equal(x.total,7500);
+await assert.rejects(quote({items:[{id:'p3',qty:1}]}),/unavailable/);
+await assert.rejects(quote({items:[{id:'p1',qty:-1}]}),/Invalid product or quantity/);
+await assert.rejects(quote({items:[{id:'p2',qty:1}],coupon:'BLOOM20'}),/does not apply/);
+assert.throws(()=>decodeImage('data:image/png;base64,'+Buffer.from('fake').toString('base64')),/Image file does not match/);
+assert.ok(calls.every(c=>!JSON.stringify(c.headers).includes('RESEND_API_KEY')));
+console.log('PASS | server-side price verification / coupon scope / hidden stock / quantity / image validation');

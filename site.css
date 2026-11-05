@@ -706,3 +706,14 @@ body{font-size:16px;line-height:1.55}
   .hero-band-copy .btn.btn-primary,.admin-layout .btn,
   .nav-actions .wa-brand,.nav-actions>button[aria-label="Open shopping cart"]{transition:none}
 }
+
+/* V15 cloud-backed mode */
+.gdsb-maintenance,.gdsb-admin-login{max-width:470px;margin:8vh auto;padding:30px 25px;text-align:center;color:#161712;background:#fffdf5;border:1px solid #eee0aa;border-radius:20px;box-shadow:0 12px 50px #00000012}
+.gdsb-maintenance img,.gdsb-admin-login img{border-radius:50%;object-fit:contain}
+.gdsb-maintenance h1,.gdsb-admin-login h1{font-family:Manrope,sans-serif;font-size:28px;letter-spacing:-.05em}
+.gdsb-admin-login{text-align:left}.gdsb-admin-login>img{display:block;margin:auto}.gdsb-admin-login h1,.gdsb-admin-login>p{text-align:center}
+.gdsb-admin-login label{font-size:14px}.gdsb-admin-login input{min-height:48px}
+.gdsb-admin-login .btn{width:100%;background:#ffe000;color:#141414}
+.gdsb-admin-logout{display:block;margin:0 0 12px auto;border:1px solid #d5c36b;border-radius:12px;background:#fff6c8;color:#161712;padding:9px 15px;font-weight:700}
+.gdsb-captcha{margin:18px 0;min-height:65px}
+@media(max-width:520px){.gdsb-maintenance,.gdsb-admin-login{margin:35px 16px}}

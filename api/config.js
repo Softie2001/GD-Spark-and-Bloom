@@ -1,0 +1,2 @@
+import {configured,cloudinaryConfigured,method} from '../lib/server.js';
+export default async function handler(req,res){if(method(req,res,['GET']))return;res.setHeader('Cache-Control','no-store');return res.status(200).json({ready:configured(),mediaReady:cloudinaryConfigured(),checkoutReady:Boolean(configured()&&process.env.TURNSTILE_SITE_KEY&&process.env.TURNSTILE_SECRET_KEY&&process.env.RESEND_API_KEY&&process.env.RESEND_FROM&&process.env.ADMIN_NOTIFY_EMAIL&&/^https:\/\//.test(process.env.SITE_ORIGIN||'')),turnstileSiteKey:process.env.TURNSTILE_SITE_KEY||null})}
