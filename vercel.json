@@ -134,6 +134,14 @@
     {
       "source": "/admin-product",
       "destination": "/admin-product.html"
+    },
+    {
+      "source": "/products/:id",
+      "destination": "/api/product-page?id=:id"
+    },
+    {
+      "source": "/product-sitemap.xml",
+      "destination": "/api/product-sitemap"
     }
   ]
 }
