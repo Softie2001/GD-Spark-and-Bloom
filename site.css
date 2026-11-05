@@ -791,3 +791,64 @@ body.gdsb-order-confirm-open{overflow:hidden}
 @keyframes gdsb-order-sheet-up{from{transform:translateY(34px);opacity:.7}to{transform:translateY(0);opacity:1}}
 @media(max-width:600px){.gdsb-order-confirm-overlay{padding:0}.gdsb-order-confirm-sheet{width:100%;padding:9px 20px calc(18px + env(safe-area-inset-bottom))}.gdsb-order-confirm-body{padding-top:15px}.gdsb-order-confirm-check{width:60px;height:60px;margin-bottom:13px}}
 @media(prefers-reduced-motion:reduce){.gdsb-order-confirm-sheet{animation:none}}
+
+
+/* GD Spark & Bloom - mobile-first admin order review */
+.gdsb-orders-toolbar{display:flex;align-items:center;justify-content:space-between;flex-wrap:wrap;gap:9px 16px;margin:2px 0 15px}
+.gdsb-orders-count{display:inline-flex;align-items:center;gap:9px;padding:9px 13px;border-radius:999px;background:#ffe97a;color:#141612;font-size:12px;font-weight:800}
+.gdsb-orders-count strong{display:grid;place-items:center;min-width:22px;height:22px;padding:0 5px;background:#171914;color:#fff;border-radius:50%;font-size:11px}
+.gdsb-orders-instruction{font-size:12px;color:#68695c;max-width:430px;line-height:1.45}
+.gdsb-orders-list{display:grid;gap:13px;max-width:900px}
+.gdsb-orders-list .gdsb-order-card{margin:0;padding:0;border:1px solid #e6dfce;background:#fff;border-radius:17px;overflow:hidden;box-shadow:0 3px 14px rgba(24,26,20,.035)}
+.gdsb-orders-list .gdsb-order-card[open]{border-color:#d7cbad;box-shadow:0 9px 24px rgba(24,26,20,.06)}
+.gdsb-order-summary{display:block;padding:17px 18px 13px;cursor:pointer;list-style:none;user-select:none}
+.gdsb-order-summary::-webkit-details-marker{display:none}
+.gdsb-order-summary::marker{content:""}
+.gdsb-order-summary:hover{background:#fffdf6}
+.gdsb-order-summary:focus-visible{outline:3px solid #cfac32;outline-offset:-3px}
+.gdsb-order-headline{display:flex;justify-content:space-between;align-items:center;gap:8px;min-width:0}
+.gdsb-order-reference{font-size:11px;letter-spacing:.035em;font-weight:800;color:#746b50;overflow-wrap:anywhere;min-width:0}
+.gdsb-order-status{display:inline-flex;align-items:center;justify-content:center;min-height:25px;flex-shrink:0;border-radius:100px;padding:5px 9px;font-size:10px;line-height:1.3;font-weight:800;text-align:center}
+.gdsb-order-status--pending{background:#fff2d0;color:#80601c}
+.gdsb-order-status--paid{background:#e7f2e6;color:#2f6943}
+.gdsb-order-status--attention{background:#fff0e9;color:#a0452c}
+.gdsb-order-name{display:block;margin:8px 0 5px;color:#171914;font-size:17px;line-height:1.3;font-weight:800;overflow-wrap:anywhere}
+.gdsb-order-timing{display:flex;align-items:baseline;justify-content:space-between;flex-wrap:wrap;gap:4px 12px}
+.gdsb-order-timing time{font-size:11px;color:#707266;font-variant-numeric:tabular-nums;line-height:1.5}
+.gdsb-order-time{white-space:nowrap}
+.gdsb-order-sum{font-size:16px;font-weight:800;color:#151713;white-space:nowrap;font-variant-numeric:tabular-nums}
+.gdsb-order-expand-label{margin-top:12px;border-top:1px solid #f0eee6;padding-top:10px;display:flex;gap:8px;align-items:center;justify-content:space-between;font-size:11px;color:#71634c;font-weight:800}
+.gdsb-order-expand-open{display:none}
+.gdsb-order-card[open] .gdsb-order-expand-closed{display:none}
+.gdsb-order-card[open] .gdsb-order-expand-open{display:inline}
+.gdsb-order-chevron{font-size:21px;line-height:1;transition:transform .2s ease}
+.gdsb-order-card[open] .gdsb-order-chevron{transform:rotate(180deg)}
+.gdsb-order-body{border-top:1px solid #ece7d9;padding:0 18px 17px}
+.gdsb-order-section{padding:16px 0;border-bottom:1px solid #efede6}
+.gdsb-order-section:last-child{border-bottom:0;padding-bottom:0}
+.gdsb-order-section h3{font:800 12px/1.35 Manrope,'DM Sans',sans-serif;letter-spacing:.01em;color:#24251f;margin:0 0 12px}
+.gdsb-order-data-grid{display:grid;grid-template-columns:repeat(2,minmax(0,1fr));gap:14px 12px;min-width:0}
+.gdsb-order-data-grid>div{min-width:0}
+.gdsb-order-data-grid span{display:block;font-size:10px;font-weight:700;color:#7c7b71;margin-bottom:5px}
+.gdsb-order-data-grid strong{display:block;font-size:12px;line-height:1.5;font-weight:700;color:#24251f;overflow-wrap:anywhere}
+.gdsb-order-data-grid .gdsb-order-data-wide{grid-column:1/-1}
+.gdsb-order-items{display:grid;gap:8px}
+.gdsb-order-item{display:flex;align-items:baseline;justify-content:space-between;gap:12px;color:#24251f;font-size:12px;line-height:1.5}
+.gdsb-order-item span{min-width:0;overflow-wrap:anywhere}
+.gdsb-order-item small{color:#79796d;white-space:nowrap;font-weight:700}
+.gdsb-order-item strong{flex-shrink:0;font-size:12px;color:#1c1c18}
+.gdsb-order-items-total{border-top:1px dashed #e8e0d0;padding-top:10px;margin-top:11px;display:flex;justify-content:space-between;gap:12px;font-size:12px;font-weight:800}
+.gdsb-order-receipt-link{display:inline-flex;align-items:center;gap:12px;justify-content:space-between;padding:11px 14px;border:1px solid #e0d3b1;border-radius:11px;background:#fff9e7;color:#24231c;text-decoration:none;font-size:12px;font-weight:800;max-width:100%}
+.gdsb-order-receipt-link:hover{background:#fff1c6}
+.gdsb-order-hint,.gdsb-order-receipt-note{font-size:11px;color:#787469;line-height:1.5;margin:9px 0 0}
+.gdsb-order-email-error{border-radius:10px;background:#fff1e9;color:#8a422a;padding:11px;font-size:11px;margin-top:10px;line-height:1.5}
+.gdsb-order-inline-btn{border:0;background:transparent;font:inherit;font-weight:800;text-decoration:underline;color:#7f3e22;cursor:pointer}
+.gdsb-order-fulfillment-heading{margin-top:17px!important}
+.gdsb-order-action-grid{display:grid;grid-template-columns:repeat(2,minmax(0,1fr));gap:9px}
+.gdsb-order-action{border:1px solid #deded6;border-radius:10px;padding:11px 9px;min-height:40px;background:#fff;color:#262821;font-family:inherit;font-size:11px;font-weight:800;line-height:1.25;cursor:pointer;text-align:center;overflow-wrap:anywhere}
+.gdsb-order-action:focus-visible,.gdsb-order-receipt-link:focus-visible{outline:3px solid #d6b443;outline-offset:2px}
+.gdsb-order-action:active{transform:translateY(1px)}
+.gdsb-order-action--primary{background:#161813;border-color:#161813;color:#fff}
+.gdsb-order-action--danger{color:#9c4634;background:#fffaf9;border-color:#ecd6d0}
+@media(max-width:480px){.gdsb-orders-list{gap:11px}.gdsb-order-summary{padding:15px 13px 12px}.gdsb-order-body{padding:0 13px 13px}.gdsb-order-headline{gap:7px}.gdsb-order-name{font-size:16px}.gdsb-order-status{max-width:51%;font-size:9.5px;padding:5px 8px}.gdsb-order-data-grid{gap:11px 10px}.gdsb-order-action-grid{gap:7px}.gdsb-order-action{padding:10px 7px;min-height:42px}}
+@media(prefers-reduced-motion:reduce){.gdsb-order-chevron{transition:none}.gdsb-order-action:active{transform:none}}

@@ -93,7 +93,87 @@ function overview(){let paid=db.orders.filter(o=>['Payment confirmed','Preparing
 const statuses=['Pending verification','Payment confirmed','Payment not confirmed','Preparing order','Out for delivery','Delivered'];
 function orderMsg(o,type){let c=o.customer;if(type==='confirmed')return `Hello ${c.name}, this is GD Spark & Bloom. We have verified your payment of ${fmt(o.total)} for order ${o.id}. Thank you! We will discuss your delivery fee and arrangements with you here.`;if(type==='rejected')return `Hello ${c.name}, this is GD Spark & Bloom. We could not verify the payment receipt for order ${o.id} (${fmt(o.total)}). Please reply with your transfer details so we can review it. Do not make a second payment until we advise you.`;if(type==='delivery')return `Hello ${c.name}, your GD Spark & Bloom order ${o.id} has been sent for delivery. We'll share your delivery details here. Thank you for shopping with us!`;if(type==='delivered')return `Hello ${c.name}, our records show your GD Spark & Bloom order ${o.id} as delivered. Thank you for choosing us!`;return `Hello ${c.name}, this is GD Spark & Bloom about your order ${o.id}.`}
 function setOrderStatus(id,status,withWhatsapp){let o=db.orders.find(o=>o.id===id);if(!o)return;o.status=status;save();render();toast('Order marked: '+status);if(withWhatsapp){let typ=status==='Payment confirmed'?'confirmed':status==='Payment not confirmed'?'rejected':status==='Out for delivery'?'delivery':status==='Delivered'?'delivered':'generic';wa(orderMsg(o,typ))}}
-function ordersAdmin(){return `<div class="table-tools"><button class="chip active">All orders (${db.orders.length})</button><span class="small-note" style="align-self:center">Open each receipt to review the transfer before confirming.</span></div>${db.orders.length?db.orders.map(o=>`<article class="order-card"><div class="order-card-head"><div><b style="font-size:15px">${esc(o.id)} · ${esc(o.customer.name)}</b><p>${new Date(o.createdAt).toLocaleString('en-NG')} · ${esc(o.customer.phone)} · ${esc(o.customer.city)}, ${esc(o.customer.state)}</p><p><b>${fmt(o.total)}</b> · ${o.items.map(i=>`${esc(i.name)} × ${i.qty}`).join(', ')}</p><p>Address: ${esc(o.customer.address)}${o.customer.note?' · Note: '+esc(o.customer.note):''}</p></div><span class="status ${o.status==='Delivered'?'ok':o.status==='Payment not confirmed'?'bad':''}">${esc(o.status)}</span></div><div style="display:flex;gap:16px;align-items:center;flex-wrap:wrap;margin-top:15px">${o.receipt?`<a href="${o.receipt}" target="_blank" download="receipt-${esc(o.id)}.png" title="View payment receipt"><img class="receipt" src="${o.receipt}" alt="Uploaded receipt for ${esc(o.id)}"></a><span class="small-note">Tap receipt to open/download. Verify against bank records.</span>`:`<span class="small-note">${o.receiptDeletedAt?`Receipt deleted after 20 days`:`Receipt unavailable`}</span>`}${window.GDSB_EXPECT_BACKEND&&o.notificationError?`<span class="small-note" style="color:#7a260d">Email alert unsuccessful; order is saved. <button type="button" class="mini-btn" onclick="retryOrderEmail('${o.id}')">Retry email</button></span>`:''}</div><div class="order-actions"><button class="mini-btn" onclick="setOrderStatus('${o.id}','Payment confirmed',true)">Confirm & message</button><button class="mini-btn danger" onclick="setOrderStatus('${o.id}','Payment not confirmed',true)">Not confirmed & message</button><button class="mini-btn" onclick="setOrderStatus('${o.id}','Preparing order',false)">Preparing</button><button class="mini-btn" onclick="setOrderStatus('${o.id}','Out for delivery',true)">Send delivery message</button><button class="mini-btn" onclick="setOrderStatus('${o.id}','Delivered',true)">Mark delivered</button><button class="mini-btn" onclick="wa(orderMsg(db.orders.find(x=>x.id==='${o.id}'),'generic'))">Open WhatsApp chat</button></div></article>`).join(''):`<div class="shop-empty">No orders yet. New orders and receipts will appear here.</div>`}`}
+/* GD Spark & Bloom | accessible, collapsible order review cards */
+const gdsbOpenOrderCards = new Set();
+function gdsbRememberOrderCard(el){
+  if(!el.isConnected)return;
+  const id=el.dataset.orderId;
+  if(!id)return;
+  if(el.open)gdsbOpenOrderCards.add(id);
+  else gdsbOpenOrderCards.delete(id);
+}
+function gdsbOrderStamp(value){
+  const d=new Date(value);
+  if(!Number.isFinite(d.getTime()))return {date:'Date unavailable',time:''};
+  const timeZone='Africa/Lagos';
+  return {
+    date:new Intl.DateTimeFormat('en-GB',{timeZone,day:'numeric',month:'short',year:'numeric'}).format(d),
+    time:new Intl.DateTimeFormat('en-US',{timeZone,hour:'numeric',minute:'2-digit',hour12:true}).format(d).toUpperCase()+' WAT'
+  };
+}
+function gdsbOrderStatusTone(status){
+  if(['Payment confirmed','Preparing order','Out for delivery','Delivered'].includes(status))return 'paid';
+  if(['Payment not confirmed','Cancelled'].includes(status))return 'attention';
+  return 'pending';
+}
+function ordersAdmin(){
+  return `<div class="gdsb-orders-toolbar">
+    <span class="gdsb-orders-count">Orders <strong>${db.orders.length}</strong></span>
+    <span class="gdsb-orders-instruction">Select an order to view its receipt and update its status.</span>
+  </div>
+  <div class="gdsb-orders-list">${db.orders.length ? db.orders.map(o=>{
+    const stamp=gdsbOrderStamp(o.createdAt);
+    const orderId=esc(o.id);
+    const customer=o.customer||{};
+    const lines=o.items||[];
+    return `<details class="order-card gdsb-order-card" data-order-id="${orderId}" ontoggle="gdsbRememberOrderCard(this)" ${gdsbOpenOrderCards.has(o.id)?'open':''}>
+      <summary class="gdsb-order-summary">
+        <div class="gdsb-order-headline">
+          <span class="gdsb-order-reference">${orderId}</span>
+          <span class="gdsb-order-status gdsb-order-status--${gdsbOrderStatusTone(o.status)}">${esc(o.status)}</span>
+        </div>
+        <strong class="gdsb-order-name">${esc(customer.name||'Customer')}</strong>
+        <div class="gdsb-order-timing"><time datetime="${esc(o.createdAt||'')}">${esc(stamp.date)}${stamp.time?` <span class="gdsb-order-time">· ${esc(stamp.time)}</span>`:''}</time><strong class="gdsb-order-sum">${fmt(o.total)}</strong></div>
+        <div class="gdsb-order-expand-label"><span class="gdsb-order-expand-closed">View order details</span><span class="gdsb-order-expand-open">Hide order details</span><span class="gdsb-order-chevron" aria-hidden="true">⌄</span></div>
+      </summary>
+      <div class="gdsb-order-body">
+        <section class="gdsb-order-section" aria-label="Customer and delivery">
+          <h3>Customer &amp; delivery</h3>
+          <div class="gdsb-order-data-grid">
+            <div><span>WhatsApp</span><strong>${esc(customer.phone||'—')}</strong></div>
+            <div><span>Location</span><strong>${esc([customer.city,customer.state].filter(Boolean).join(', ')||'—')}</strong></div>
+            <div class="gdsb-order-data-wide"><span>Delivery address</span><strong>${esc(customer.address||'—')}</strong></div>
+            ${customer.note?`<div class="gdsb-order-data-wide"><span>Customer note</span><strong>${esc(customer.note)}</strong></div>`:''}
+          </div>
+        </section>
+        <section class="gdsb-order-section" aria-label="Order items">
+          <h3>Products</h3>
+          <div class="gdsb-order-items">${lines.map(item=>`<div class="gdsb-order-item"><span>${esc(item.name)} <small>× ${Number(item.qty)||0}</small></span><strong>${fmt(Number(item.unit||0)*Number(item.qty||0))}</strong></div>`).join('')}</div>
+          <div class="gdsb-order-items-total"><span>Order total</span><strong>${fmt(o.total)}</strong></div>
+        </section>
+        <section class="gdsb-order-section" aria-label="Payment receipt">
+          <h3>Payment receipt</h3>
+          ${o.receipt?`<a class="gdsb-order-receipt-link" href="${esc(o.receipt)}" target="_blank" rel="noopener noreferrer">Open payment receipt <span aria-hidden="true">↗</span></a><p class="gdsb-order-hint">Check the transfer in your bank account before confirming payment.</p>`:`<p class="gdsb-order-receipt-note">${o.receiptDeletedAt?'Receipt deleted after 20 days':'Receipt unavailable'}</p>`}
+          ${window.GDSB_EXPECT_BACKEND&&o.notificationError?`<div class="gdsb-order-email-error">Email notification failed; the order is saved. <button type="button" class="gdsb-order-inline-btn" onclick="retryOrderEmail('${orderId}')">Retry email</button></div>`:''}
+        </section>
+        <section class="gdsb-order-section gdsb-order-actions-section" aria-label="Order management">
+          <h3>Payment review</h3>
+          <div class="gdsb-order-action-grid">
+            <button type="button" class="gdsb-order-action gdsb-order-action--primary" onclick="setOrderStatus('${orderId}','Payment confirmed',true)">Confirm &amp; message</button>
+            <button type="button" class="gdsb-order-action gdsb-order-action--danger" onclick="setOrderStatus('${orderId}','Payment not confirmed',true)">Not confirmed</button>
+          </div>
+          <h3 class="gdsb-order-fulfillment-heading">Fulfillment</h3>
+          <div class="gdsb-order-action-grid">
+            <button type="button" class="gdsb-order-action" onclick="setOrderStatus('${orderId}','Preparing order',false)">Preparing</button>
+            <button type="button" class="gdsb-order-action" onclick="setOrderStatus('${orderId}','Out for delivery',true)">Out for delivery</button>
+            <button type="button" class="gdsb-order-action" onclick="setOrderStatus('${orderId}','Delivered',true)">Mark delivered</button>
+            <button type="button" class="gdsb-order-action" onclick="wa(orderMsg(db.orders.find(x=>x.id==='${orderId}'),'generic'))">WhatsApp customer</button>
+          </div>
+        </section>
+      </div>
+    </details>`;
+  }).join('') : `<div class="shop-empty">No orders yet. New orders and receipts will appear here.</div>`}</div>`;
+}
 function productsAdmin(){let p=editing?db.products.find(x=>x.id===editing):null;return `<div class="admin-actions"><button class="btn btn-primary" onclick="location.href='admin-product.html'">${icon('plus')} Add new product</button></div><div class="table-scroll" style="margin-bottom:23px"><table class="data-table"><thead><tr><th>Product</th><th>Price</th><th>Availability</th><th>Kits</th><th>Visibility</th><th>Actions</th></tr></thead><tbody>${db.products.map(p=>`<tr><td><div style="display:flex;align-items:center;gap:9px"><img src="${esc(p.image)}" width="39" height="39" style="border-radius:7px;object-fit:cover" alt=""><div><b>${esc(p.name)}</b><br><span class="muted">${esc(p.category)} ${p.bestseller?'· Best seller':''}</span></div></div></td><td>${fmt(actualPrice(p))}${isSale(p)?` <del>${fmt(p.price)}</del>`:''}</td><td><span class="status ${p.stock?'ok':'bad'}">${p.stock?'In stock':'Unavailable'}</span></td><td><button class="mini-btn" onclick="toggleProd('${p.id}','kit')">${p.kit===true||(p.kit===undefined&&p.category.toLowerCase().includes('kit'))?'Remove from kits':'Add to kits'}</button></td><td>${p.hidden?'Hidden':'Visible'}</td><td><button class="mini-btn" onclick="location.href='admin-product.html?edit=${p.id}'">Edit</button> <button class="mini-btn" onclick="toggleProd('${p.id}','hidden')">${p.hidden?'Show':'Hide'}</button> <button class="mini-btn" onclick="toggleProd('${p.id}','stock')">${p.stock?'Sold out':'Available'}</button> <button class="mini-btn danger" onclick="deleteProd('${p.id}')">Delete</button></td></tr>`).join('')}</tbody></table></div>`}
 function productFormAdmin(){const id=new URLSearchParams(location.search).get('edit');editing=id||null;const p=editing?db.products.find(x=>x.id===editing):null;return `<div class="admin-actions"><button class="btn btn-outline" onclick="location.href='admin.html#products'">Back to products</button></div><div class="card admin-form-card" id="product-form"><h2 class="admin-panel-title">${p?'Edit product':'Add a new product'}</h2><form onsubmit="saveProduct(event)"><div class="form-grid"><div class="form-field"><label>Product name *</label><input name="name" required maxlength="100" value="${esc(p?.name||'')}"></div><div class="form-field"><label>Category *</label><input name="category" list="known-categories" required maxlength="60" placeholder="Select or type a new category" value="${esc(p?.category||'')}"><datalist id="known-categories">${getCategories().map(c=>`<option value="${esc(c)}"></option>`).join('')}</datalist><small class="small-note">Choose a category above or type a new one. It will appear in the shop filter.</small></div><div class="form-field"><label>Regular price (₦) *</label><input name="price" type="number" min="1" step="1" required value="${p?.price||''}"></div><div class="form-field"><label>Sale price (₦) · optional</label><input name="salePrice" type="number" min="0" step="1" value="${p?.salePrice||''}"></div></div><div class="form-field"><label>Product description</label><textarea name="description" maxlength="500">${esc(p?.description||'')}</textarea></div><div class="form-field"><label>Product image URL (or upload below)</label><input name="image" placeholder="https://..." value="${esc(p?.image?.startsWith('data:')?'':p?.image||'')}"></div><div class="form-field"><label>Upload image (optional, max 1 MB)</label><input name="imageUpload" type="file" accept="image/png,image/jpeg,image/webp"></div><div class="settings-toggles" style="margin-bottom:22px"><label><input type="checkbox" name="stock" ${!p||p.stock?'checked':''}> Available</label><label><input type="checkbox" name="bestseller" ${p?.bestseller?'checked':''}> Best seller</label><label><input type="checkbox" name="kit" ${p?.kit||p?.category?.toLowerCase().includes('kit')?'checked':''}> Show in kits</label><label><input type="checkbox" name="hidden" ${p?.hidden?'checked':''}> Hidden from shop</label></div><button class="btn btn-primary" type="submit">${p?'Save product changes':'Add product'} ${icon('arrow')}</button>${p?` <button class="btn btn-secondary" type="button" onclick="location.href='admin.html#products'">Cancel</button>`:''}<p class="small-note">Discount percentages are calculated automatically when a valid sale price is lower than the regular price.</p></form></div>`}
 function toggleProd(id,key){let p=db.products.find(p=>p.id===id);if(p){if(key==='kit'&&p.kit===undefined)p.kit=!p.category.toLowerCase().includes('kit');else p[key]=!p[key];save();render();toast('Product updated')}}
