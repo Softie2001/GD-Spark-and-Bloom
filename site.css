@@ -879,3 +879,7 @@ body.gdsb-order-confirm-open{overflow:hidden}
   background:transparent!important;
   margin:0 auto 15px!important;
 }
+/* Keep live review marquee inside page width. */
+.reviews-section{min-width:0;max-width:100%;overflow:hidden}
+.review-track-window{display:block;width:100%;max-width:100%;min-width:0;overflow-x:auto!important;overflow-y:hidden}
+.gdsb-order-receipt-link svg{width:16px;height:16px;flex:0 0 16px;stroke:currentColor;fill:none}

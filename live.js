@@ -30,11 +30,8 @@ render=function(){
 
  if(GDSB_IS_ADMIN){const logout=document.createElement('button');logout.className='sidebtn';logout.innerHTML=icon('logout')+' Sign out';logout.onclick=gdsbSignOut;document.querySelector('.admin-side')?.append(logout)}
 }
-function reviewsSection(){
- // No fictional testimonials on the real storefront. Genuine consented reviews only.
- const arr=(db.reviews||[]).filter(r=>r.visible&&r.consent);if(!arr.length)return '';
- const cards=arr.map(r=>reviewCard(r,false)).join('');return `<section class="reviews-section"><div class="wrap"><h2>Review</h2><div class="review-viewport" id="review-viewport"><div class="review-track">${cards}${cards}${cards}</div></div></div></section>`;
-}
+function reviewsSection(){const arr=(db.reviews||[]).filter(r=>r.visible&&r.consent);if(!arr.length)return '';const originals=arr.map(r=>reviewCard(r,false)).join('');const copies=Math.max(1,Math.ceil(5/arr.length));const duplicates=originals.replaceAll('<article ', '<article aria-hidden="true" ');const group=originals+duplicates.repeat(copies-1);return `<section class="reviews-section" aria-labelledby="reviews-heading"><div class="review-heading"><h2 id="reviews-heading">Review</h2></div><div class="review-track-window" id="review-track-window" tabindex="0" aria-label="Customer reviews; swipe sideways to browse"><div class="review-track">${[0,1,2].map((x)=>`<div class="review-track-group" ${x===1?'':'aria-hidden="true"'}>${group}</div>`).join('')}</div></div></section>`}
+
 function discountTotal(){if(GDSB_LIVE_READY)return GDSB_COUPON_RESULT?.discount||0;return 0}
 function couponObj(){return GDSB_COUPON_RESULT?.couponCode?{code:GDSB_COUPON_RESULT.couponCode,active:true,scope:'all'}:null}
 async function gdsbRefreshQuote(showError=false){if(!cartLines().length){GDSB_COUPON_RESULT=null;return}try{GDSB_COUPON_RESULT=await gdsbApi('quote',{method:'POST',body:JSON.stringify({items:cartLines().map(x=>({id:x.p.id,qty:x.qty})),coupon:couponApplied||''})})}catch(error){GDSB_COUPON_RESULT=null;if(showError)toast(error.message);if(couponApplied){couponApplied='';sessionStorage.removeItem('gdsb_coupon')}}render()}
@@ -96,7 +93,7 @@ async function gdsbUploaded(f){if(!f||!f.size)return '';return await fileData(f)
 saveProduct=async function(e){e.preventDefault();try{
  const d=new FormData(e.target);const upload=await gdsbUploaded(d.get('imageUpload'));
  const payload={id:editing||undefined,name:d.get('name'),category:d.get('category'),description:d.get('description'),price:Number(d.get('price')),salePrice:Number(d.get('salePrice')||0),stock:d.has('stock'),bestseller:d.has('bestseller'),kit:d.has('kit'),hidden:d.has('hidden'),image:upload||d.get('image')||''};
- if(await gdsbWrite('product-save',payload))location.href='admin.html#products';
+ if(await gdsbWrite('product-save',payload))location.href='/admin#products';
  }catch(err){toast(err.message)}};
 function createCategory(e){e.preventDefault();gdsbWrite('category-add',{name:new FormData(e.target).get('category')})}
 function renameCategory(old){const name=prompt('Rename category',old);if(name&&name.trim())gdsbWrite('category-rename',{old,name})}

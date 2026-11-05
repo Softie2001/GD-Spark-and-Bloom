@@ -38,3 +38,12 @@ assert.match(fs.readFileSync('index.html','utf8'),/"@type":"Organization"/);
 console.log('PASS | 7 public pages in sitemap, unique SEO metadata, canonical & social tags');
 console.log('PASS | Admin, cart, checkout, payment, success excluded by crawlable noindex');
 console.log('PASS | Vercel security headers and receipt cleanup cron preserved');
+
+// Clean admin aliases must retain security headers and preserve other SEO rules.
+for(const [alias,html] of [['/admin','/admin.html'],['/admin-product','/admin-product.html']]){
+ assert.ok(config.rewrites?.some(r=>r.source===alias&&r.destination===html),'Missing admin alias '+alias);
+ const rule=config.headers.find(r=>r.source===alias);
+ assert.ok(rule?.headers.some(h=>h.key.toLowerCase()==='x-robots-tag'&&h.value.includes('noindex')),'Missing noindex on '+alias);
+ assert.ok(rule?.headers.some(h=>h.key.toLowerCase()==='cache-control'&&h.value==='no-store'),'Missing no-store on '+alias);
+}
+console.log('PASS | clean admin aliases are private and uncached');

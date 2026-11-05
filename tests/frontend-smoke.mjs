@@ -7,3 +7,12 @@ vm.createContext(ctx);
 vm.runInContext(fs.readFileSync('site.js','utf8'),ctx,{timeout:2000});vm.runInContext(fs.readFileSync('live.js','utf8'),ctx,{timeout:2000});
 for(let i=0;i<30&&app.innerHTML.indexOf('Herbal Soap')<0;i++)await new Promise(resolve=>setTimeout(resolve,15));
 assert.match(app.innerHTML,/Herbal Soap/);assert.doesNotMatch(app.innerHTML,/Herbal review examples/);assert.match(app.innerHTML,/Shop our kits/);console.log('PASS | cloud catalogue renders, live mode omits fictional reviews, kit/category page retained');
+
+// Published customer reviews must render in the same bounded, looping viewport as the preview.
+vm.runInContext("db.reviews=[{id:'r1',author:'Verified Customer',location:'Lagos',rating:5,text:'Test review',visible:true,consent:true}];render()",ctx,{timeout:2000});
+assert.match(app.innerHTML,/id="review-track-window"/);
+assert.equal((app.innerHTML.match(/class="review-track-group"/g)||[]).length,3);
+assert.equal((app.innerHTML.match(/class="review-card"/g)||[]).length,15,'single review must repeat enough to scroll on desktop');
+assert.ok(!app.innerHTML.includes('class="review-viewport"'),'old unbounded review layout must not return');
+assert.match(app.innerHTML,/Verified Customer/);
+console.log('PASS | live review marquee bounded and replicated for continuous motion');
