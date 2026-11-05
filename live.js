@@ -27,7 +27,7 @@ render=function(){
  if(GDSB_IS_ADMIN&&!GDSB_ADMIN_OK){document.getElementById('app').innerHTML=gdsbAdminLogin();return}
  _gdsbRender();
  if(page==='payment')gdsbInsertTurnstile();
- if(GDSB_IS_ADMIN){const logout=document.createElement('button');logout.className='gdsb-admin-logout';logout.textContent='Sign out';logout.onclick=gdsbSignOut;document.querySelector('.admin-main')?.prepend(logout)}
+ if(GDSB_IS_ADMIN){const logout=document.createElement('button');logout.className='sidebtn';logout.innerHTML=icon('logout')+' Sign out';logout.onclick=gdsbSignOut;document.querySelector('.admin-side')?.append(logout)}
 }
 function reviewsSection(){
  // No fictional testimonials on the real storefront. Genuine consented reviews only.
