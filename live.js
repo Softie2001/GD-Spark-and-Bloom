@@ -58,7 +58,7 @@ submitOrder=async function(e){e.preventDefault();if(!receiptData)return toast('A
 function successPage(){const o=JSON.parse(sessionStorage.getItem('gdsb_order_result')||'null');return `<main class="page wrap"><div class="card" style="max-width:640px;margin:auto;text-align:center"><h1>Order received</h1><p>Order reference: <b>${esc(o?.id||'')}</b></p><p>Your receipt is awaiting manual verification. This does not confirm that the transfer was received.</p><p>Delivery details and charges are discussed with the vendor on WhatsApp.</p><button class="btn btn-primary" onclick="wa('Hello GD Spark & Bloom, I just submitted order ${esc(o?.id||'')} for ${fmt(o?.total||0)}. Please check my payment receipt.')">Message seller</button><p><a href="index.html">Continue shopping</a></p></div></main>`}
 function gdsbInsertTurnstile(){
  if(!GDSB_TURNSTILE_SITEKEY)return;const form=document.querySelector('.payment-page form');if(!form||form.querySelector('.gdsb-captcha'))return;
- const box=document.createElement('div');box.className='gdsb-captcha';box.setAttribute('aria-label','Bot prevention check');form.querySelector('button[type="submit"]')?.before(box);
+ const box=document.createElement('div');box.className='gdsb-captcha';box.setAttribute('aria-label','Bot prevention check');form.appendChild(box);
  function draw(){if(!window.turnstile)return;try{GDSB_TURNSTILE_ID=window.turnstile.render(box,{sitekey:GDSB_TURNSTILE_SITEKEY,theme:'light'})}catch{}}
  if(window.turnstile)draw();else{const s=document.createElement('script');s.src='https://challenges.cloudflare.com/turnstile/v0/api.js?render=explicit';s.async=true;s.onload=draw;document.head.appendChild(s)}
 }
