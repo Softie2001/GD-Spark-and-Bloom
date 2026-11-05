@@ -34,7 +34,7 @@ for(const file of privatePages){
  assert.ok(rule,'Missing technical headers for '+file);
  assert.ok(rule.headers.some(x=>x.key.toLowerCase()==='x-robots-tag'&&x.value.includes('noindex')),'Missing X-Robots-Tag for '+file);
 }
-assert.match(fs.readFileSync('index.html','utf8'),/"@type":"Organization"/);
+assert.match(fs.readFileSync('index.html','utf8'),/"@type":"OnlineStore"/);
 console.log('PASS | 7 public pages in sitemap, unique SEO metadata, canonical & social tags');
 console.log('PASS | Admin, cart, checkout, payment, success excluded by crawlable noindex');
 console.log('PASS | Vercel security headers and receipt cleanup cron preserved');
