@@ -118,7 +118,7 @@ removeLineItem=function(id){GDSB_ORIGINAL.removeLineItem(id);if(couponApplied)gd
 submitOrder=async function(e){e.preventDefault();if(GDSB_ORDER_SUBMITTING)return;if(!receiptData)return toast('Add your receipt first');GDSB_ORDER_SUBMITTING=true;
  const btn=e.submitter||document.querySelector('button[form="payment-form"][type="submit"]');if(btn)btn.disabled=true;
  try{
-  const customer=JSON.parse(sessionStorage.getItem('gdsb_customer')||'null');if(!customer)throw Error('Enter delivery information first');
+  const customer=JSON.parse(sessionStorage.getItem('gdsb_customer')||'null');if(!customer)throw Error('Enter delivery information first');if(!String(customer.callPhone||'').trim())throw Error('Go back to Delivery and enter your calling number before submitting.');
   const sent=await gdsbApi('orders',{method:'POST',body:JSON.stringify({reference:orderReference(),customer,items:cartLines().map(({p,qty})=>({id:p.id,qty})),coupon:couponApplied||'',receipt:receiptData,website:e.target.elements?.namedItem('website')?.value||''})});
   const result={id:sent.reference,total:sent.total,status:sent.status};sessionStorage.setItem('gdsb_last_order',sent.reference);sessionStorage.setItem('gdsb_order_result',JSON.stringify(result));
   cart={};cartSave();clearCoupon();receiptData='';sessionStorage.removeItem('gdsb_customer');sessionStorage.removeItem('gdsb_pending_order');try{gdsbShowOrderSuccess(result)}catch(uiError){console.error('Order saved, confirmation display failed',uiError);location.href='success.html'}
