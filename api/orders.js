@@ -7,7 +7,7 @@ export default async function handler(req,res){if(method(req,res,['POST']))retur
  try{
   const d=body(req);if(typeof d.website==='string'&&d.website.trim())return fail(res,400,'Order could not be submitted. Please try again.');
   const customer=d.customer||{};
-  const c={customer_name:required(customer.name,'Name',100),whatsapp:checkPhone(customer.phone),delivery_state:required(customer.state,'State',70),city:required(customer.city,'City',90),delivery_address:required(customer.address,'Delivery address',250),note:tidy(customer.note,500)};
+  const c={customer_name:required(customer.name,'Name',100),whatsapp:checkPhone(customer.phone),calling_phone:checkPhone(customer.callPhone,'Calling number'),delivery_state:required(customer.state,'State',70),city:required(customer.city,'City',90),delivery_address:required(customer.address,'Delivery address',250),note:tidy(customer.note,500)};
   // All prices and discount eligibility are recalculated on the server, never trusted from the browser.
   const s=await settings();if(!/^\d{10}$/.test(s.account_number)||!s.account_name||!s.bank_name)return fail(res,503,'Bank transfer details are not ready. Do not transfer money.');
   if(!process.env.RESEND_API_KEY||!process.env.RESEND_FROM||!process.env.ADMIN_NOTIFY_EMAIL||!/^https:\/\//.test(process.env.SITE_ORIGIN||''))return fail(res,503,'Order notifications are not configured yet');
