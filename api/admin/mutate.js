@@ -82,7 +82,7 @@ export default async function handler(req,res){if(method(req,res,['POST']))retur
   const existing=await rows('gdsb_orders',`select=*&reference=eq.${q(ref)}&limit=1`);
   if(!existing.length)invalid('Order not found');
   const o=existing[0];
-  const notify=await sendAdminMail({reference:o.reference,customer_name:o.customer_name,whatsapp:o.whatsapp,total:o.total})
+  const notify=await sendAdminMail({reference:o.reference,customer_name:o.customer_name,whatsapp:o.whatsapp,calling_phone:o.calling_phone,total:o.total})
     .catch(()=>({sent:false,error:'Email service unavailable'}));
   await patch('gdsb_orders',`reference=eq.${q(ref)}`,{
    notification_sent_at:notify.sent?new Date().toISOString():null,
