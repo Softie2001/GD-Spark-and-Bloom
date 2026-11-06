@@ -122,7 +122,10 @@ submitOrder=async function(e){e.preventDefault();if(GDSB_ORDER_SUBMITTING)return
   const sent=await gdsbApi('orders',{method:'POST',body:JSON.stringify({reference:orderReference(),customer,items:cartLines().map(({p,qty})=>({id:p.id,qty})),coupon:couponApplied||'',receipt:receiptData,website:e.target.elements?.namedItem('website')?.value||''})});
   const result={id:sent.reference,total:sent.total,status:sent.status};sessionStorage.setItem('gdsb_last_order',sent.reference);sessionStorage.setItem('gdsb_order_result',JSON.stringify(result));
   cart={};cartSave();clearCoupon();receiptData='';sessionStorage.removeItem('gdsb_customer');sessionStorage.removeItem('gdsb_pending_order');try{gdsbShowOrderSuccess(result)}catch(uiError){console.error('Order saved, confirmation display failed',uiError);location.href='success.html'}
- }catch(err){GDSB_ORDER_SUBMITTING=false;toast(err.message);if(btn)btn.disabled=false}
+ }catch(err){GDSB_ORDER_SUBMITTING=false;toast(err.message);if(btn)btn.disabled=false;
+  const feedback=document.getElementById('receipt-feedback');
+  if(feedback&&/stock|available|price changed/i.test(err.message)){feedback.textContent=err.message;feedback.setAttribute('role','alert')}
+ }
 };
 
 // The order has already been saved by /api/orders. This sheet confirms receipt
