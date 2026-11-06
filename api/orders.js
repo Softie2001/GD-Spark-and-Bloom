@@ -21,7 +21,7 @@ export default async function handler(req,res){if(method(req,res,['POST']))retur
   try {
    orderId=await supa('/rest/v1/rpc/gdsb_place_order',{method:'POST',data:{
     p_order:{...c,reference:ref,subtotal:pricing.subtotal,discount:pricing.discount,total:pricing.total,coupon_code:pricing.couponCode||null,receipt_path:receiptPath},
-    p_lines:pricing.lines
+    p_lines:pricing.lines.map(({id,name,qty,unit,lineTotal})=>({id,name,qty,unit,line_total:lineTotal}))
    }});
   }catch(error){
    const reason=error?.info?.message;
