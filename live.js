@@ -191,7 +191,7 @@ async function gdsbUploaded(f){
 }
 saveProduct=async function(e){e.preventDefault();try{
  const d=new FormData(e.target);const upload=await gdsbUploaded(d.get('imageUpload'));
- const payload={id:editing||undefined,name:d.get('name'),category:d.get('category'),description:d.get('description'),price:Number(d.get('price')),salePrice:Number(d.get('salePrice')||0),stock:d.has('stock'),bestseller:d.has('bestseller'),kit:d.has('kit'),hidden:d.has('hidden'),image:upload||d.get('image')||''};
+ const payload={id:editing||undefined,name:d.get('name'),category:d.get('category'),description:d.get('description'),price:Number(d.get('price')),salePrice:Number(d.get('salePrice')||0),availableQuantity:Number(d.get('availableQuantity')),stock:d.has('stock'),bestseller:d.has('bestseller'),kit:d.has('kit'),hidden:d.has('hidden'),image:upload||d.get('image')||''};
  if(await gdsbWrite('product-save',payload))location.href='/admin#products';
  }catch(err){toast(err.message)}};
 function createCategory(e){e.preventDefault();gdsbWrite('category-add',{name:new FormData(e.target).get('category')})}
