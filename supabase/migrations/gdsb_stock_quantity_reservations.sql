@@ -180,4 +180,5 @@ revoke all on function public.gdsb_place_order(jsonb,jsonb) from public,anon,aut
 revoke all on function public.gdsb_set_order_status(text,text) from public,anon,authenticated;
 grant execute on function public.gdsb_place_order(jsonb,jsonb) to service_role;
 grant execute on function public.gdsb_set_order_status(text,text) to service_role;
+notify pgrst, 'reload schema';
 commit;
