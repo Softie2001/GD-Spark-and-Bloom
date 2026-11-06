@@ -1,5 +1,5 @@
 import {randomUUID} from 'node:crypto';
-import {configured,checkAdmin,body,method,fail,onError,tidy,required,money,add,patch,rows,remove,q,uploadCloudinary,verifiedCloudinaryUrl,sendAdminMail} from '../../lib/server.js';
+import {configured,checkAdmin,body,method,fail,onError,tidy,required,money,add,patch,rows,remove,q,supa,uploadCloudinary,verifiedCloudinaryUrl,sendAdminMail} from '../../lib/server.js';
 const invalid=(m)=>{throw Object.assign(new Error(m),{status:400})};
 async function picture(value,existing=''){
  if(!value)return existing;
@@ -15,10 +15,13 @@ export default async function handler(req,res){if(method(req,res,['POST']))retur
   const name=required(payload.name,'Product name',150),cat=required(payload.category,'Category',60);
   const price=money(payload.price),sale=payload.salePrice===null||payload.salePrice===0||payload.salePrice===''?null:money(payload.salePrice);
   if(price===null||price>100000000||sale!==null&&(sale===null||sale>=price))invalid('Check product prices');
+  const stockQuantity=Number(payload.availableQuantity);
+  if(payload.availableQuantity===null||payload.availableQuantity===undefined||payload.availableQuantity===''||
+     !Number.isSafeInteger(stockQuantity)||stockQuantity<0||stockQuantity>1000000)invalid('Enter a whole-number stock quantity between 0 and 1,000,000');
   const existing=await rows('gdsb_products',`select=id,image_url&id=eq.${q(id)}&limit=1`);
   await category(cat);
   const image=await picture(payload.image,existing[0]?.image_url||'');
-  const record={id,name,category:cat,description:tidy(payload.description,500),price,sale_price:sale,in_stock:!!payload.stock,best_seller:!!payload.bestseller,is_kit:!!payload.kit,hidden:!!payload.hidden,image_url:image,updated_at:new Date().toISOString()};
+  const record={id,name,category:cat,description:tidy(payload.description,500),price,sale_price:sale,in_stock:!!payload.stock,stock_quantity:stockQuantity,best_seller:!!payload.bestseller,is_kit:!!payload.kit,hidden:!!payload.hidden,image_url:image,updated_at:new Date().toISOString()};
   if(existing.length)await patch('gdsb_products',`id=eq.${q(id)}`,record);else await add('gdsb_products',record);
   result={id};break;
  }
@@ -89,12 +92,17 @@ export default async function handler(req,res){if(method(req,res,['POST']))retur
  }
  case 'order-status':{
   const id=required(payload.id,'Order reference',55),status=String(payload.status);
-  const valid=['Pending verification','Payment confirmed','Payment not confirmed','Preparing order','Out for delivery','Delivered','Cancelled'];if(!valid.includes(status))invalid('Unknown status');
-  const old=await rows('gdsb_orders',`select=id,status,payment_confirmed_at&reference=eq.${q(id)}&limit=1`);if(!old.length)invalid('Order not found');
-  const update={status,updated_at:new Date().toISOString()};
-  if(status==='Payment confirmed'&&!old[0].payment_confirmed_at)update.payment_confirmed_at=new Date().toISOString();
-  if(['Payment not confirmed','Pending verification','Cancelled'].includes(status))update.payment_confirmed_at=null;
-  await patch('gdsb_orders',`reference=eq.${q(id)}`,update);break
+  const valid=['Pending verification','Payment confirmed','Payment not confirmed','Preparing order','Out for delivery','Delivered','Cancelled'];
+  if(!valid.includes(status))invalid('Unknown status');
+  try{
+   await supa('/rest/v1/rpc/gdsb_set_order_status',{method:'POST',data:{p_reference:id,p_status:status}});
+  }catch(error){
+   if(['INSUFFICIENT_STOCK','STOCK_UNAVAILABLE'].includes(error?.info?.message))
+     throw Object.assign(new Error('This order cannot be reactivated because there is not enough available stock.'),{status:409});
+   if(error?.info?.message==='ORDER_NOT_FOUND')invalid('Order not found');
+   throw error;
+  }
+  break;
  }
  default:invalid('Unsupported admin action');
  }
