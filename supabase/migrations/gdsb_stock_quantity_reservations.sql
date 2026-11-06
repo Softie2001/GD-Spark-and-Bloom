@@ -15,8 +15,12 @@ alter table public.gdsb_products
 
 alter table public.gdsb_orders
   add column if not exists stock_reserved boolean not null default false;
+alter table public.gdsb_orders
+  add column if not exists stock_tracked boolean not null default false;
+alter table public.gdsb_orders
+  add column if not exists payment_confirmed_at timestamptz;
 
--- Legacy orders predate inventory tracking; never release stock for those historical orders.
+-- Legacy orders predate inventory tracking; never release or reserve stock for those historical orders.
 
 create or replace function public.gdsb_place_order(p_order jsonb, p_lines jsonb)
 returns uuid
@@ -77,14 +81,14 @@ begin
 
   insert into public.gdsb_orders(
     reference,customer_name,whatsapp,delivery_state,city,delivery_address,note,
-    subtotal,discount,total,coupon_code,receipt_path,status,stock_reserved
+    subtotal,discount,total,coupon_code,receipt_path,status,stock_reserved,stock_tracked
   ) values (
     p_order->>'reference',p_order->>'customer_name',p_order->>'whatsapp',
     p_order->>'delivery_state',p_order->>'city',p_order->>'delivery_address',
     coalesce(p_order->>'note',''),(p_order->>'subtotal')::integer,
     (p_order->>'discount')::integer,(p_order->>'total')::integer,
     nullif(p_order->>'coupon_code',''),p_order->>'receipt_path',
-    'Pending verification',true
+    'Pending verification',true,true
   ) returning id into v_order_id;
   insert into public.gdsb_order_items(
     order_id,product_id,product_name,quantity,unit_price,line_total
@@ -123,7 +127,7 @@ begin
   end if;
   v_release := p_status in ('Payment not confirmed','Cancelled');
 
-  if v_order.stock_reserved and v_release then
+  if v_order.stock_tracked and v_order.stock_reserved and v_release then
     for v_item in
       select product_id, sum(quantity)::integer as quantity
       from public.gdsb_order_items
@@ -134,7 +138,7 @@ begin
        set stock_quantity=stock_quantity+v_item.quantity,updated_at=now()
        where id=v_item.product_id;
     end loop;
-  elsif not v_order.stock_reserved and not v_release then
+  elsif v_order.stock_tracked and not v_order.stock_reserved and not v_release then
     -- A cancelled/rejected order must re-reserve before it becomes active.
     for v_item in
       select product_id, sum(quantity)::integer as quantity
@@ -159,7 +163,9 @@ begin
     end loop;
   end if;
   update public.gdsb_orders
-    set status=p_status, stock_reserved=not v_release, updated_at=now(),
+    set status=p_status,
+      stock_reserved=case when stock_tracked then not v_release else false end,
+      updated_at=now(),
       payment_confirmed_at=case
         when p_status='Payment confirmed' then coalesce(payment_confirmed_at,now())
         when p_status in ('Payment not confirmed','Pending verification','Cancelled') then null
