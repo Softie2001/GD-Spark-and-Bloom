@@ -1,4 +1,4 @@
-import {configured,body,method,onError,fail,required,tidy,checkPhone,decodeImage,uploadImage,newOrderRef,rows,add,patch,remove,q,sendAdminMail,deleteReceipt} from '../lib/server.js';
+import {configured,body,method,onError,fail,required,tidy,checkPhone,decodeImage,uploadImage,newOrderRef,supa,patch,q,sendAdminMail,deleteReceipt} from '../lib/server.js';
 import {quote,settings} from '../lib/shop.js';
 import {randomUUID} from 'node:crypto';
 
@@ -16,14 +16,26 @@ export default async function handler(req,res){if(method(req,res,['POST']))retur
   const ref=typeof d.reference==='string'&&/^GD-[A-Z0-9-]{8,48}$/.test(d.reference)?d.reference:newOrderRef();
   receiptPath=`${new Date().toISOString().slice(0,10)}/${randomUUID()}.${receipt.ext}`;
   await uploadImage('gdsb-receipts',receiptPath,d.receipt);
-  const inserted=await add('gdsb_orders',{...c,reference:ref,subtotal:pricing.subtotal,discount:pricing.discount,total:pricing.total,coupon_code:pricing.couponCode||null,receipt_path:receiptPath,status:'Pending verification'});
-  orderId=inserted?.[0]?.id;if(!orderId)throw new Error('Could not record order');
-  await add('gdsb_order_items',pricing.lines.map(l=>({order_id:orderId,product_id:l.id,product_name:l.name,quantity:l.qty,unit_price:l.unit,line_total:l.lineTotal})));
+  // One database transaction locks stock rows, reserves quantities, and inserts
+  // the order + items together. A concurrent checkout cannot oversell stock.
+  try {
+   orderId=await supa('/rest/v1/rpc/gdsb_place_order',{method:'POST',data:{
+    p_order:{...c,reference:ref,subtotal:pricing.subtotal,discount:pricing.discount,total:pricing.total,coupon_code:pricing.couponCode||null,receipt_path:receiptPath},
+    p_lines:pricing.lines
+   }});
+  }catch(error){
+   const reason=error?.info?.message;
+   if(['INSUFFICIENT_STOCK','STOCK_UNAVAILABLE'].includes(reason))
+    throw Object.assign(new Error('This product has fewer units available now. Please update your cart and try again.'),{status:409});
+   if(reason==='PRICE_CHANGED')
+    throw Object.assign(new Error('A product price changed. Please refresh the shop and try again.'),{status:409});
+   throw error;
+  }
+  if(typeof orderId!=='string'||!orderId)throw new Error('Could not record order');
   const notify=await sendAdminMail({...c,reference:ref,total:pricing.total}).catch(()=>({sent:false,error:'Email service unavailable'}));
   await patch('gdsb_orders',`id=eq.${q(orderId)}`,{notification_sent_at:notify.sent?new Date().toISOString():null,notification_error:notify.sent?null:notify.error}).catch(()=>{});
   res.setHeader('Cache-Control','no-store');return res.status(201).json({reference:ref,total:pricing.total,status:'Pending verification',notificationSent:notify.sent});
  }catch(err){
-  if(orderId)await remove('gdsb_orders',`id=eq.${q(orderId)}`).catch(()=>{});
   if(receiptPath)await deleteReceipt(receiptPath)
   return onError(res,err)
  }
