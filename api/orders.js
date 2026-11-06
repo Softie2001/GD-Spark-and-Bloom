@@ -26,7 +26,7 @@ export default async function handler(req,res){if(method(req,res,['POST']))retur
   }catch(error){
    const reason=error?.info?.message;
    if(['INSUFFICIENT_STOCK','STOCK_UNAVAILABLE'].includes(reason))
-    throw Object.assign(new Error('This product has fewer units available now. Please update your cart and try again.'),{status:409});
+    throw Object.assign(new Error('Stock changed during checkout. If you already transferred money, contact the store on WhatsApp with your transfer reference before paying again.'),{status:409});
    if(reason==='PRICE_CHANGED')
     throw Object.assign(new Error('A product price changed. Please refresh the shop and try again.'),{status:409});
    throw error;
