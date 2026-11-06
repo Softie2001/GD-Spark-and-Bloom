@@ -25,6 +25,7 @@ create table if not exists public.gdsb_products (
   price integer not null check (price >= 0),
   sale_price integer check (sale_price is null or (sale_price >= 0 and sale_price < price)),
   in_stock boolean not null default true,
+  stock_quantity integer not null default 0 check (stock_quantity between 0 and 1000000),
   best_seller boolean not null default false,
   hidden boolean not null default false,
   is_kit boolean not null default false,
@@ -80,6 +81,9 @@ create table if not exists public.gdsb_orders (
   total integer not null check (total >= 0),
   coupon_code text,
   receipt_path text not null,
+  stock_reserved boolean not null default false,
+  stock_tracked boolean not null default false,
+  payment_confirmed_at timestamptz,
   status text not null default 'Pending verification' check (status in (
     'Pending verification','Payment confirmed','Payment not confirmed',
     'Preparing order','Out for delivery','Delivered','Cancelled'
@@ -147,3 +151,6 @@ grant usage,select on sequence public.gdsb_order_items_id_seq to service_role;
 -- Bootstrap the admin ONLY after an admin user has been created in Supabase Auth.
 -- Replace the placeholder with its actual UUID, then run exactly once:
 -- INSERT INTO public.gdsb_admin_members(user_id) VALUES ('ADMIN_AUTH_USER_UUID');
+
+-- After base schema installation, run supabase/migrations/gdsb_stock_quantity_reservations.sql
+-- to install the locked transactional order and restocking functions.
