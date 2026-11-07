@@ -908,7 +908,7 @@ body.gdsb-order-confirm-open{overflow:hidden}
 .gdsb-about-cac-figure a{display:block;width:min(100%,255px);margin:auto;padding:7px;background:#fff;border:1px solid #dfdfcf;border-radius:12px;box-shadow:0 8px 23px rgba(30,30,20,.09);transition:transform .2s ease}
 .gdsb-about-cac-figure a:hover{transform:translateY(-2px)}
 .gdsb-about-cac-figure a:focus-visible{outline:3px solid #ffe000;outline-offset:3px}
-.gdsb-about-cac-figure img{display:block;width:100%;height:auto;aspect-ratio:499/697;object-fit:contain;border-radius:7px}
+.gdsb-about-cac-figure img{display:block;width:100%;height:auto;aspect-ratio:983/1280;object-fit:contain;border-radius:7px}
 .gdsb-about-cac-figure figcaption{margin-top:10px;font-size:12px;line-height:1.6;color:#615d4a;font-weight:650}
 @media(max-width:650px){.gdsb-about-cac{grid-template-columns:1fr;padding:23px 18px;gap:20px;border-radius:20px}.gdsb-about-cac-figure a{width:min(100%,210px)}.gdsb-about-cac-figure figcaption{font-size:11px}}
 @media(prefers-reduced-motion:reduce){.gdsb-about-cac-figure a{transition:none}}
