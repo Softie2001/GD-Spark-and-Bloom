@@ -72,7 +72,7 @@ function about(){const vendorPhoto=bannerImage(db.heroBanner?.image||HERO_IMAGE)
     <h2 id="gdsb-cac-heading">Registered with the CAC.</h2>
     <p>GD Spark &amp; Bloom is officially registered as a business name with Nigeria's Corporate Affairs Commission (CAC), under the Companies and Allied Matters Act 2020.</p>
     <p>This registration reflects our commitment to operating as an accountable business and helping customers shop with greater confidence.</p>
-    <p class="gdsb-about-cac-note">CAC registration confirms our business registration; it is not a certification or medical endorsement of our products.</p>
+    
   </div>
   <figure class="gdsb-about-cac-figure">
     <a href="/assets/cac-registration-certificate.webp" target="_blank" rel="noopener noreferrer" aria-label="View GD Spark and Bloom CAC business name registration certificate">
