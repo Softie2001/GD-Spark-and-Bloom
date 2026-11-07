@@ -75,8 +75,8 @@ function about(){const vendorPhoto=bannerImage(db.heroBanner?.image||HERO_IMAGE)
     
   </div>
   <figure class="gdsb-about-cac-figure">
-    <a href="/assets/cac-registration-certificate.webp" target="_blank" rel="noopener noreferrer" aria-label="View GD Spark and Bloom CAC business name registration certificate">
-      <img src="/assets/cac-registration-certificate.webp" alt="Corporate Affairs Commission certificate of business name registration for GD Spark and Bloom" width="499" height="697" loading="lazy" decoding="async">
+    <a href="/assets/cac-registration-certificate.webp?v=20261107-new" target="_blank" rel="noopener noreferrer" aria-label="View GD Spark and Bloom CAC business name registration certificate">
+      <img src="/assets/cac-registration-certificate.webp?v=20261107-new" alt="Corporate Affairs Commission certificate of business name registration for GD Spark and Bloom" width="983" height="1280" loading="lazy" decoding="async">
     </a>
     <figcaption>CAC Certificate of Registration · Tap to view</figcaption>
   </figure>
