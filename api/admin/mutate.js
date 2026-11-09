@@ -40,6 +40,10 @@ export default async function handler(req,res){if(method(req,res,['POST']))retur
  case 'category-delete':{
   const name=required(payload.name,'Category name',60);const products=await rows('gdsb_products',`select=id&category=eq.${q(name)}&limit=1`);if(products.length)invalid('Reassign category products first');await remove('gdsb_categories',`name=eq.${q(name)}`);break
  }
+ case 'inventory-settings':{
+  if(typeof payload.inventoryEnabled!=='boolean'||typeof payload.inventoryShowQuantity!=='boolean')invalid('Invalid stock control settings');
+  await patch('gdsb_settings','id=eq.1',{inventory_enabled:payload.inventoryEnabled,inventory_show_quantity:payload.inventoryShowQuantity,updated_at:new Date().toISOString()});break;
+ }
  case 'coupon-global':{
   await patch('gdsb_settings','id=eq.1',{coupon_entry_enabled:!!payload.enabled,updated_at:new Date().toISOString()});break
  }
