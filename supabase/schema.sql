@@ -50,6 +50,8 @@ create table if not exists public.gdsb_coupons (
 create table if not exists public.gdsb_settings (
   id smallint primary key default 1 check (id = 1),
   coupon_entry_enabled boolean not null default false,
+  inventory_enabled boolean not null default true,
+  inventory_show_quantity boolean not null default false,
   bank_name text not null default '',
   account_name text not null default '',
   account_number text not null default '',
