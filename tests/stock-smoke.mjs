@@ -16,7 +16,7 @@ const migration=fs.readFileSync('supabase/migrations/gdsb_stock_quantity_reserva
 const schema=fs.readFileSync('supabase/schema.sql','utf8');
 assert.match(site,/name="availableQuantity"[^>]*type="number"[^>]*stockLimited/);
 assert.match(site,/availableUnits\(p\)/);
-assert.match(site,/Only '\+availableUnits\(p\)\+' available/);
+assert.match(site,/function stockLimitNotice\(p\)/);
 assert.match(live,/availableQuantity:Number\(d.get\('availableQuantity'\)\)/);
 assert.match(admin,/stock_quantity:stockQuantity/);
 assert.match(admin,/Number\.isSafeInteger\(stockQuantity\)/);
