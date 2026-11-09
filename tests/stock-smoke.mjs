@@ -14,7 +14,7 @@ const live=fs.readFileSync('live.js','utf8');
 const site=fs.readFileSync('site.js','utf8');
 const migration=fs.readFileSync('supabase/migrations/gdsb_stock_quantity_reservations.sql','utf8');
 const schema=fs.readFileSync('supabase/schema.sql','utf8');
-assert.match(site,/name="availableQuantity"[^>]*type="number"[^>]*required/);
+assert.match(site,/name="availableQuantity"[^>]*type="number"[^>]*stockLimited/);
 assert.match(site,/availableUnits\(p\)/);
 assert.match(site,/Only '\+availableUnits\(p\)\+' available/);
 assert.match(live,/availableQuantity:Number\(d.get\('availableQuantity'\)\)/);
