@@ -41,7 +41,10 @@ SELECT
  LEFT(btrim(COALESCE(NULLIF(s.promo_title,''),'Previous promotion')),90),
  LEFT(COALESCE(s.promo_subtitle,''),160),
  COALESCE(s.promo_image,''),
- s.promo_starts_at,s.promo_ends_at,
+ CASE WHEN s.promo_starts_at IS NOT NULL AND s.promo_ends_at IS NOT NULL
+           AND s.promo_starts_at >= s.promo_ends_at THEN NULL
+      ELSE s.promo_starts_at END,
+ s.promo_ends_at,
  COALESCE(s.promo_enabled,false) AND s.promo_ends_at IS NOT NULL,
  COALESCE(s.promo_countdown,true),true
 FROM public.gdsb_settings AS s
