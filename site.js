@@ -293,7 +293,6 @@ function bannerAdmin(){const h=db.heroBanner,p=promoList().find(x=>x.id===promoE
   <p class="small-note">Scheduled banners start and end automatically. If schedules overlap, the most recently started banner takes priority. Without an active promotion, your permanent hero returns.</p>
   <div class="gdsb-promo-list">${promotionCards()}</div>
 </section>
-<div class="notice" style="margin-top:20px">Promotional banners do not change product prices. Manage actual discounts in <b>Products</b>.</div>
 `}
 async function saveHeroBanner(e){e.preventDefault();const d=new FormData(e.target);try{const upload=await fileData(d.get('imageUpload'));db.heroBanner={title:d.get('title').trim(),subtitle:d.get('subtitle').trim(),image:upload||d.get('image')||db.heroBanner.image};save();render();toast('Permanent hero saved')}catch(err){toast(err.message)}}
 async function savePromoBanner(e){
