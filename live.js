@@ -214,7 +214,36 @@ saveCoupon=function(e){e.preventDefault();const d=new FormData(e.target);gdsbWri
 function toggleCoupon(code){gdsbWrite('coupon-toggle',{code})}
 function deleteCoupon(code){if(confirm('Delete coupon?'))gdsbWrite('coupon-delete',{code})}
 saveHeroBanner=async function(e){e.preventDefault();try{const d=new FormData(e.target),image=await gdsbUploaded(d.get('imageUpload'));gdsbWrite('hero-save',{title:d.get('title'),subtitle:d.get('subtitle'),image:image||d.get('image')})}catch(err){toast(err.message)}};
-savePromoBanner=async function(e){e.preventDefault();try{const d=new FormData(e.target),image=await gdsbUploaded(d.get('imageUpload'));gdsbWrite('promo-save',{title:d.get('title'),subtitle:d.get('subtitle'),image:image||d.get('image'),start:d.get('start'),end:d.get('end'),active:d.has('active'),countdown:d.has('countdown')})}catch(err){toast(err.message)}};
+savePromoBanner=async function(e){
+ e.preventDefault();
+ const d=new FormData(e.target),rawStart=d.get('start'),rawEnd=d.get('end'),active=d.has('active');
+ const start=rawStart?new Date(rawStart):null,end=rawEnd?new Date(rawEnd):null;
+ if(start&&!Number.isFinite(start.getTime()))return toast('Choose a valid start time');
+ if(end&&!Number.isFinite(end.getTime()))return toast('Choose a valid end time');
+ if(active&&(!end||end.getTime()<=Date.now()))return toast('Enabled promotions need a future end time');
+ if(start&&end&&end.getTime()<=start.getTime())return toast('End time must follow start time');
+ try {
+  const upload=await gdsbUploaded(d.get('imageUpload')),savedId=promoEditingId;
+  const payload={id:savedId||undefined,title:d.get('title'),subtitle:d.get('subtitle'),
+   image:upload||d.get('image')||'',
+   start:start?start.toISOString():null,end:end?end.toISOString():null,
+   active,countdown:d.has('countdown')};
+  const ok=await gdsbWrite(savedId?'promo-update':'promo-create',payload);
+  if(ok){promoEditingId=null;render();}
+ }catch(err){toast(err.message)}
+};
+togglePromotion=function(id){
+ const p=promoList().find(x=>x.id===id);
+ if(!p)return;
+ if(!p.active&&(!p.end||Date.parse(p.end)<=Date.now()))return toast('Edit this banner with a future end time before enabling it');
+ gdsbWrite('promo-toggle',{id});
+};
+deletePromotion=function(id){
+ const p=promoList().find(x=>x.id===id);
+ if(!p||!confirm('Permanently delete "'+p.title+'"?'))return;
+ gdsbWrite('promo-delete',{id}).then(ok=>{if(ok&&promoEditingId===id){promoEditingId=null;render();}});
+};
+
 function saveBank(e){e.preventDefault();const d=new FormData(e.target);gdsbWrite('bank-save',{name:d.get('name'),bank:d.get('bank'),number:d.get('number')})}
 function saveReview(e){e.preventDefault();const d=new FormData(e.target);gdsbWrite('review-add',{author:d.get('author'),location:d.get('location'),text:d.get('text'),rating:Number(d.get('rating')),consent:d.has('consent')})}
 function toggleReview(id){gdsbWrite('review-toggle',{id})}
