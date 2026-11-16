@@ -210,7 +210,91 @@ function couponsAdmin(){return `<div class="card admin-form-card"><div class="co
 function saveCoupon(e){e.preventDefault();let d=new FormData(e.target),code=d.get('code').toUpperCase().trim(),type=d.get('type'),value=Number(d.get('value'));if(db.coupons.some(c=>c.code===code))return toast('Coupon already exists');if(type==='percent'&&value>100)return toast('Percentage cannot exceed 100');db.coupons.push({code,type,value,scope:d.get('scope'),productId:d.get('scope')==='product'?d.get('productId'):null,active:true});save();render();toast('Coupon created')}
 function toggleCoupon(code){let c=db.coupons.find(x=>x.code===code);if(c)c.active=!c.active;save();render()}
 function deleteCoupon(code){if(!confirm('Delete this coupon?'))return;db.coupons=db.coupons.filter(c=>c.code!==code);save();render()}
-function bannerAdmin(){const h=db.heroBanner,b=db.promoBanner;return `<div class="admin-banner-grid"><section class="card admin-form-card"><div class="section-kicker">Permanent storefront banner</div><h2 class="admin-panel-title">Hero banner</h2><p class="muted">This banner remains on the homepage until you replace it. Timed promotions temporarily take its place.</p><form onsubmit="saveHeroBanner(event)"><div class="form-field"><label>Hero heading *</label><input name="title" maxlength="90" required value="${esc(h.title)}"></div><div class="form-field"><label>Short supporting text</label><textarea name="subtitle" maxlength="160">${esc(h.subtitle||'')}</textarea></div><div class="form-field"><label>Hero image URL (optional)</label><input name="image" placeholder="https://..." value="${esc(h.image?.startsWith('data:')?'':h.image||'')}"></div><div class="form-field"><label>Or upload hero image (max 5 MB)</label><input name="imageUpload" type="file" accept="image/png,image/jpeg,image/webp"></div><button class="btn btn-primary" type="submit">Save permanent hero ${icon('arrow')}</button></form><img class="banner-preview" src="${esc(h.image||HERO_IMAGE)}" alt="Permanent banner preview"></section><section class="card admin-form-card"><div class="section-kicker">Limited-time campaign</div><h2 class="admin-panel-title">Promotional banner</h2><p class="muted">Schedule an offer. After its end time, the original hero banner appears automatically.</p><form onsubmit="savePromoBanner(event)"><div class="form-field"><label>Promotion heading *</label><input name="title" maxlength="90" required value="${esc(b.title)}"></div><div class="form-field"><label>Short supporting text</label><textarea name="subtitle" maxlength="160">${esc(b.subtitle||'')}</textarea></div><div class="form-field"><label>Promotion image URL (optional)</label><input name="image" placeholder="https://..." value="${esc(b.image?.startsWith('data:')?'':b.image||'')}"></div><div class="form-field"><label>Or upload promotion image (max 5 MB)</label><input name="imageUpload" type="file" accept="image/png,image/jpeg,image/webp"></div><div class="form-grid"><div class="form-field"><label>Start date and time</label><input name="start" type="datetime-local" value="${esc(b.start||'')}"></div><div class="form-field"><label>End date and time *</label><input name="end" type="datetime-local" value="${esc(b.end||'')}"></div></div><div class="settings-toggles"><label><input type="checkbox" name="active" ${b.active?'checked':''}> Enable promotional banner</label><label><input type="checkbox" name="countdown" ${b.countdown?'checked':''}> Show countdown</label></div><button class="btn btn-primary" type="submit">Save promotion & schedule ${icon('arrow')}</button></form><div class="banner-state">Status: <strong>${datesActive(b)?'Showing now':b.active?'Scheduled / expired':'Disabled'}</strong></div>${b.image?`<img class="banner-preview" src="${esc(b.image)}" alt="Promotional banner preview">`:''}</section></div><div class="notice" style="margin-top:20px">Product sale prices are managed in <b>Products</b> and discount badges calculate automatically. A promotion banner does not change product prices by itself.</div>`}
+
+let promoEditingId=null;
+function promoList(){return Array.isArray(db.promotions)?db.promotions:[]}
+function promoLocalTime(value){
+ if(!value)return '';
+ const date=new Date(value);
+ if(!Number.isFinite(date.getTime()))return '';
+ return new Date(date.getTime()-date.getTimezoneOffset()*60000).toISOString().slice(0,16)
+}
+function promoDateLabel(value){
+ if(!value)return 'When enabled';
+ const time=new Date(value);
+ return Number.isFinite(time.getTime())?time.toLocaleString('en-NG',{dateStyle:'medium',timeStyle:'short'}):'Invalid time'
+}
+function promoStatus(p){
+ if(!p.active)return 'Disabled';
+ const now=Date.now(),end=Date.parse(p.end),start=p.start?Date.parse(p.start):0;
+ if(!Number.isFinite(end))return 'Needs an end time';
+ if(end<=now)return 'Ended';
+ if(Number.isFinite(start)&&start>now)return 'Scheduled';
+ return activePromotion()?.id===p.id?'Live now':'Active · another banner takes priority'
+}
+function editPromotion(id){promoEditingId=id;render();document.getElementById('gdsb-promo-editor')?.scrollIntoView({block:'start',behavior:'smooth'})}
+function newPromotion(){promoEditingId=null;render();document.getElementById('gdsb-promo-editor')?.scrollIntoView({block:'start',behavior:'smooth'})}
+function togglePromotion(id){
+ const p=promoList().find(x=>x.id===id);if(!p)return;
+ if(!p.active&&(!p.end||Date.parse(p.end)<=Date.now()))return toast('Edit the end time before enabling this promotion');
+ p.active=!p.active;save();render();toast(p.active?'Promotion enabled':'Promotion disabled')
+}
+function deletePromotion(id){
+ const p=promoList().find(x=>x.id===id);if(!p||!confirm('Permanently delete "'+p.title+'"?'))return;
+ db.promotions=db.promotions.filter(x=>x.id!==id);
+ if(promoEditingId===id)promoEditingId=null;
+ save();render();toast('Promotion deleted')
+}
+function promotionCards(){
+ const list=promoList();
+ if(!list.length)return '<p class="small-note">No promotional banners yet. Create one above and choose its schedule.</p>';
+ return list.map(p=>`<article class="gdsb-promo-item">
+   <div class="gdsb-promo-preview">${p.image?`<img src="${esc(p.image)}" alt="" loading="lazy">`:'<span>No image</span>'}</div>
+   <div class="gdsb-promo-item-copy">
+     <div class="gdsb-promo-item-heading"><strong>${esc(p.title)}</strong><span class="gdsb-promo-status">${esc(promoStatus(p))}</span></div>
+     <small>${esc(promoDateLabel(p.start))} – ${esc(promoDateLabel(p.end))}</small>
+     <small>${p.countdown?'Countdown on':'Countdown off'}</small>
+     <div class="gdsb-promo-actions">
+       <button class="mini-btn" type="button" onclick="editPromotion('${esc(p.id)}')">Edit</button>
+       <button class="mini-btn" type="button" onclick="togglePromotion('${esc(p.id)}')">${p.active?'Disable':'Enable'}</button>
+       <button class="mini-btn danger" type="button" onclick="deletePromotion('${esc(p.id)}')">Delete</button>
+     </div>
+   </div>
+ </article>`).join('')
+}
+
+function bannerAdmin(){const h=db.heroBanner,p=promoList().find(x=>x.id===promoEditingId)||null,editing=!!p;return `<div class="admin-banner-grid"><section class="card admin-form-card"><div class="section-kicker">Permanent storefront banner</div><h2 class="admin-panel-title">Hero banner</h2><p class="muted">This banner remains on the homepage until you replace it. Timed promotions temporarily take its place.</p><form onsubmit="saveHeroBanner(event)"><div class="form-field"><label>Hero heading *</label><input name="title" maxlength="90" required value="${esc(h.title)}"></div><div class="form-field"><label>Short supporting text</label><textarea name="subtitle" maxlength="160">${esc(h.subtitle||'')}</textarea></div><div class="form-field"><label>Hero image URL (optional)</label><input name="image" placeholder="https://..." value="${esc(h.image?.startsWith('data:')?'':h.image||'')}"></div><div class="form-field"><label>Or upload hero image (max 5 MB)</label><input name="imageUpload" type="file" accept="image/png,image/jpeg,image/webp"></div><button class="btn btn-primary" type="submit">Save permanent hero ${icon('arrow')}</button></form><img class="banner-preview" src="${esc(h.image||HERO_IMAGE)}" alt="Permanent banner preview"></section>
+<section class="card admin-form-card" id="gdsb-promo-editor">
+  <div class="section-kicker">Scheduled campaigns</div>
+  <h2 class="admin-panel-title">${editing?'Edit promotional banner':'Create promotional banner'}</h2>
+  <p class="muted">Create as many banners as you need, each with its own start and end date. Only one banner appears in the homepage hero at a time.</p>
+  <form onsubmit="savePromoBanner(event)">
+    <div class="form-field"><label>Promotion heading *</label><input name="title" maxlength="90" required value="${esc(p?.title||'')}"></div>
+    <div class="form-field"><label>Short supporting text</label><textarea name="subtitle" maxlength="160">${esc(p?.subtitle||'')}</textarea></div>
+    <div class="form-field"><label>Promotion image URL (optional)</label><input name="image" placeholder="https://..." value="${esc(p?.image?.startsWith('data:')?'':p?.image||'')}"></div>
+    <div class="form-field"><label>Or upload image (max 5 MB)</label><input name="imageUpload" type="file" accept="image/png,image/jpeg,image/webp"></div>
+    <div class="form-grid">
+      <div class="form-field"><label>Start date and time</label><input name="start" type="datetime-local" value="${esc(promoLocalTime(p?.start))}"></div>
+      <div class="form-field"><label>End date and time *</label><input name="end" type="datetime-local" value="${esc(promoLocalTime(p?.end))}"></div>
+    </div>
+    <div class="settings-toggles">
+      <label><input type="checkbox" name="active" ${p?.active?'checked':''}> Enable this promotion</label>
+      <label><input type="checkbox" name="countdown" ${!p||p.countdown?'checked':''}> Show countdown</label>
+    </div>
+    <div class="gdsb-promo-actions">
+      <button class="btn btn-primary" type="submit">${editing?'Save changes':'Create & schedule'} ${icon('arrow')}</button>
+      ${editing?'<button class="btn btn-outline" type="button" onclick="newPromotion()">Cancel edit</button>':''}
+    </div>
+  </form>
+  ${p?.image?`<img class="banner-preview" src="${esc(p.image)}" alt="Promotion preview">`:''}
+</section></div>
+<section class="card admin-form-card gdsb-promo-library">
+  <div class="gdsb-promo-library-head"><div><div class="section-kicker">Your campaigns</div><h2 class="admin-panel-title">Promotional banners (${promoList().length})</h2></div><button class="btn btn-outline" onclick="newPromotion()">Add promotion</button></div>
+  <p class="small-note">Scheduled banners start and end automatically. If schedules overlap, the most recently started banner takes priority. Without an active promotion, your permanent hero returns.</p>
+  <div class="gdsb-promo-list">${promotionCards()}</div>
+</section>
+<div class="notice" style="margin-top:20px">Promotional banners do not change product prices. Manage actual discounts in <b>Products</b>.</div>
+`}
 async function saveHeroBanner(e){e.preventDefault();const d=new FormData(e.target);try{const upload=await fileData(d.get('imageUpload'));db.heroBanner={title:d.get('title').trim(),subtitle:d.get('subtitle').trim(),image:upload||d.get('image')||db.heroBanner.image};save();render();toast('Permanent hero saved')}catch(err){toast(err.message)}}
 async function savePromoBanner(e){e.preventDefault();const d=new FormData(e.target),start=d.get('start'),end=d.get('end'),active=d.has('active');if(active&&!end)return toast('Choose an end date/time for the promotion');if(active&&new Date(end).getTime()<=Date.now())return toast('End date must be in the future');if(start&&end&&new Date(end)<=new Date(start))return toast('End date must be later than start date');try{const upload=await fileData(d.get('imageUpload'));db.promoBanner={title:d.get('title').trim(),subtitle:d.get('subtitle').trim(),image:upload||d.get('image')||db.promoBanner.image,start,end,active,countdown:d.has('countdown')};save();render();toast(active?'Promotion scheduled':'Promotion saved as disabled')}catch(err){toast(err.message)}}
 
