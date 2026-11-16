@@ -296,7 +296,30 @@ function bannerAdmin(){const h=db.heroBanner,p=promoList().find(x=>x.id===promoE
 <div class="notice" style="margin-top:20px">Promotional banners do not change product prices. Manage actual discounts in <b>Products</b>.</div>
 `}
 async function saveHeroBanner(e){e.preventDefault();const d=new FormData(e.target);try{const upload=await fileData(d.get('imageUpload'));db.heroBanner={title:d.get('title').trim(),subtitle:d.get('subtitle').trim(),image:upload||d.get('image')||db.heroBanner.image};save();render();toast('Permanent hero saved')}catch(err){toast(err.message)}}
-async function savePromoBanner(e){e.preventDefault();const d=new FormData(e.target),start=d.get('start'),end=d.get('end'),active=d.has('active');if(active&&!end)return toast('Choose an end date/time for the promotion');if(active&&new Date(end).getTime()<=Date.now())return toast('End date must be in the future');if(start&&end&&new Date(end)<=new Date(start))return toast('End date must be later than start date');try{const upload=await fileData(d.get('imageUpload'));db.promoBanner={title:d.get('title').trim(),subtitle:d.get('subtitle').trim(),image:upload||d.get('image')||db.promoBanner.image,start,end,active,countdown:d.has('countdown')};save();render();toast(active?'Promotion scheduled':'Promotion saved as disabled')}catch(err){toast(err.message)}}
+async function savePromoBanner(e){
+ e.preventDefault();
+ const d=new FormData(e.target),rawStart=d.get('start'),rawEnd=d.get('end'),active=d.has('active');
+ const start=rawStart?new Date(rawStart):null,end=rawEnd?new Date(rawEnd):null;
+ if(start&&!Number.isFinite(start.getTime()))return toast('Enter a valid start time');
+ if(end&&!Number.isFinite(end.getTime()))return toast('Enter a valid end time');
+ if(active&&(!end||end.getTime()<=Date.now()))return toast('Enabled promotions need a future end date and time');
+ if(start&&end&&end.getTime()<=start.getTime())return toast('End time must be after start time');
+ try{
+  const upload=await fileData(d.get('imageUpload'));
+  const current=promoList().find(x=>x.id===promoEditingId);
+  const record={
+   id:current?.id||'demo-promo-'+Date.now(),
+   title:String(d.get('title')||'').trim(),subtitle:String(d.get('subtitle')||'').trim(),
+   image:upload||d.get('image')||current?.image||'',
+   start:start?start.toISOString():'',end:end?end.toISOString():'',
+   active,countdown:d.has('countdown'),createdAt:current?.createdAt||new Date().toISOString()
+  };
+  if(!record.title)return toast('Enter a promotion heading');
+  if(current)db.promotions=db.promotions.map(x=>x.id===current.id?record:x);
+  else db.promotions=[record,...promoList()];
+  promoEditingId=null;save();render();toast(active?'Promotion scheduled':'Promotion saved as disabled');
+ }catch(err){toast(err.message)}
+}
 
 function settingsAdmin(){return `<div class="card admin-form-card"><h2 class="admin-panel-title">Bank transfer details</h2><div class="notice" style="margin-bottom:20px">Use a verified business bank account. Customers will see these details at checkout. Verify the account belongs to the business before publishing.</div><form onsubmit="saveBank(event)"><div class="form-field"><label>Account name</label><input name="name" required value="${esc(db.bank.name)}"></div><div class="form-field"><label>Bank name</label><input name="bank" required value="${esc(db.bank.bank==='Bank details to be configured by the vendor'?'':db.bank.bank)}"></div><div class="form-field"><label>Account number</label><input name="number" required inputmode="numeric" pattern="[0-9]{10}" placeholder="10-digit Nigerian account number" value="${esc(db.bank.number==='—'?'':db.bank.number)}"></div><button type="submit" class="btn btn-primary">Save transfer details</button></form><hr style="border:0;border-top:1px solid var(--line);margin:30px 0">${window.GDSB_EXPECT_BACKEND?'':'<h2 class="admin-panel-title">Demo data controls</h2><p class="small-note">Data is only on this device. Deleting it cannot be undone.</p><button class="btn btn-outline" onclick="if(confirm(&quot;Reset demo?&quot;)){localStorage.removeItem(STORAGE_KEY);db=load();cart={};cartSave();render()}" >Reset demo data</button>'}</div>`}
 function saveBank(e){e.preventDefault();let d=new FormData(e.target);db.bank={name:d.get('name').trim(),bank:d.get('bank').trim(),number:d.get('number').trim()};save();render();toast('Bank details saved in browser demo')}
