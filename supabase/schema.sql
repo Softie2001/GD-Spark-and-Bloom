@@ -242,3 +242,29 @@ grant usage,select on sequence public.gdsb_order_items_id_seq to service_role;
 
 -- On an existing GD production database, run supabase/migrations/gdsb_dual_contact_delivery.sql
 -- before deploying the dual-contact customer delivery form. Existing orders retain NULL calling_phone.
+
+
+-- GD Spark & Bloom independent promotional schedules. For EXISTING sites,
+-- execute supabase/migrations/gdsb_multi_promotions_20261116.sql
+-- to migrate the previous single promotional banner safely.
+create table if not exists public.gdsb_promotions (
+ id uuid primary key default gen_random_uuid(),
+ title text not null check (length(btrim(title)) between 1 and 90),
+ subtitle text not null default '' check (length(subtitle) <= 160),
+ image_url text not null default '',
+ starts_at timestamptz, ends_at timestamptz,
+ enabled boolean not null default false,
+ countdown boolean not null default true,
+ legacy_settings boolean not null default false,
+ created_at timestamptz not null default now(),
+ updated_at timestamptz not null default now(),
+ constraint gdsb_promotions_dates_order check (starts_at is null or ends_at is null or ends_at > starts_at),
+ constraint gdsb_promotions_enabled_end check (not enabled or ends_at is not null)
+);
+create unique index if not exists gdsb_promotions_one_legacy
+ on public.gdsb_promotions(legacy_settings) where legacy_settings;
+create index if not exists gdsb_promotions_schedule
+ on public.gdsb_promotions(enabled,starts_at,ends_at);
+alter table public.gdsb_promotions enable row level security;
+revoke all on table public.gdsb_promotions from public,anon,authenticated;
+grant select,insert,update,delete on table public.gdsb_promotions to service_role;
