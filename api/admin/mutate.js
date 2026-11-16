@@ -66,7 +66,7 @@ export default async function handler(req,res){if(method(req,res,['POST']))retur
  case 'promo-update':{
   const isEdit=action==='promo-update';
   const id=isEdit?required(payload.id,'Promotion ID',60):null;
-  if(isEdit&&!/^[0-9a-f]{8}-[0-9a-f-]{27,}$/i.test(id))invalid('Invalid promotion ID');
+  if(isEdit&&!/^[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12}$/i.test(id))invalid('Invalid promotion ID');
   const current=isEdit?await rows('gdsb_promotions','select=*&id=eq.'+q(id)+'&limit=1'):[];
   if(isEdit&&!current.length)invalid('Promotion not found');
   const title=required(payload.title,'Promotion heading',90);
@@ -87,7 +87,7 @@ export default async function handler(req,res){if(method(req,res,['POST']))retur
  }
  case 'promo-toggle':{
   const id=required(payload.id,'Promotion ID',60);
-  if(!/^[0-9a-f]{8}-[0-9a-f-]{27,}$/i.test(id))invalid('Invalid promotion ID');
+  if(!/^[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12}$/i.test(id))invalid('Invalid promotion ID');
   const entries=await rows('gdsb_promotions','select=id,enabled,ends_at&id=eq.'+q(id)+'&limit=1');
   if(!entries.length)invalid('Promotion not found');
   const next=!entries[0].enabled;
@@ -98,7 +98,7 @@ export default async function handler(req,res){if(method(req,res,['POST']))retur
  }
  case 'promo-delete':{
   const id=required(payload.id,'Promotion ID',60);
-  if(!/^[0-9a-f]{8}-[0-9a-f-]{27,}$/i.test(id))invalid('Invalid promotion ID');
+  if(!/^[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12}$/i.test(id))invalid('Invalid promotion ID');
   await remove('gdsb_promotions','id=eq.'+q(id));
   break;
  }
