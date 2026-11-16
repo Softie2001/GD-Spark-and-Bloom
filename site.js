@@ -220,7 +220,7 @@ function promoLocalTime(value){
  return new Date(date.getTime()-date.getTimezoneOffset()*60000).toISOString().slice(0,16)
 }
 function promoDateLabel(value){
- if(!value)return 'When enabled';
+ if(!value)return 'Immediately';
  const time=new Date(value);
  return Number.isFinite(time.getTime())?time.toLocaleString('en-NG',{dateStyle:'medium',timeStyle:'short'}):'Invalid time'
 }
@@ -275,7 +275,7 @@ function bannerAdmin(){const h=db.heroBanner,p=promoList().find(x=>x.id===promoE
     <div class="form-field"><label>Or upload image (max 5 MB)</label><input name="imageUpload" type="file" accept="image/png,image/jpeg,image/webp"></div>
     <div class="form-grid">
       <div class="form-field"><label>Start date and time</label><input name="start" type="datetime-local" value="${esc(promoLocalTime(p?.start))}"></div>
-      <div class="form-field"><label>End date and time *</label><input name="end" type="datetime-local" value="${esc(promoLocalTime(p?.end))}"></div>
+      <div class="form-field"><label>End date and time (required when enabled)</label><input name="end" type="datetime-local" value="${esc(promoLocalTime(p?.end))}"></div>
     </div>
     <div class="settings-toggles">
       <label><input type="checkbox" name="active" ${p?.active?'checked':''}> Enable this promotion</label>
