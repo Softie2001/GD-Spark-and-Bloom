@@ -62,6 +62,46 @@ export default async function handler(req,res){if(method(req,res,['POST']))retur
   const existing=await rows('gdsb_settings','select=hero_image&id=eq.1');const url=await picture(payload.image,existing[0]?.hero_image||'assets/hero-full.jpg');
   await patch('gdsb_settings','id=eq.1',{hero_title:required(payload.title,'Hero title',90),hero_subtitle:tidy(payload.subtitle,160),hero_image:url,updated_at:new Date().toISOString()});break
  }
+ case 'promo-create':
+ case 'promo-update':{
+  const isEdit=action==='promo-update';
+  const id=isEdit?required(payload.id,'Promotion ID',60):null;
+  if(isEdit&&!/^[0-9a-f]{8}-[0-9a-f-]{27,}$/i.test(id))invalid('Invalid promotion ID');
+  const current=isEdit?await rows('gdsb_promotions','select=*&id=eq.'+q(id)+'&limit=1'):[];
+  if(isEdit&&!current.length)invalid('Promotion not found');
+  const title=required(payload.title,'Promotion heading',90);
+  const active=payload.active===true,countdown=payload.countdown===true;
+  const start=payload.start?new Date(payload.start):null;
+  const end=payload.end?new Date(payload.end):null;
+  if(start&&!Number.isFinite(start.getTime()))invalid('Choose a valid start date and time');
+  if(end&&!Number.isFinite(end.getTime()))invalid('Choose a valid end date and time');
+  if(active&&(!end||end.getTime()<=Date.now()))invalid('Enabled promotions need a future end date and time');
+  if(start&&end&&end.getTime()<=start.getTime())invalid('End must be after the start');
+  const image=payload.removeImage?'':await picture(payload.image,current[0]?.image_url||'');
+  const record={title,subtitle:tidy(payload.subtitle,160),image_url:image,
+    starts_at:start?start.toISOString():null,ends_at:end?end.toISOString():null,
+    enabled:active,countdown,updated_at:new Date().toISOString()};
+  if(isEdit)await patch('gdsb_promotions','id=eq.'+q(id),record);
+  else await add('gdsb_promotions',record);
+  break;
+ }
+ case 'promo-toggle':{
+  const id=required(payload.id,'Promotion ID',60);
+  if(!/^[0-9a-f]{8}-[0-9a-f-]{27,}$/i.test(id))invalid('Invalid promotion ID');
+  const entries=await rows('gdsb_promotions','select=id,enabled,ends_at&id=eq.'+q(id)+'&limit=1');
+  if(!entries.length)invalid('Promotion not found');
+  const next=!entries[0].enabled;
+  if(next&&(!entries[0].ends_at||Date.parse(entries[0].ends_at)<=Date.now()))
+    invalid('Edit this promotion with a future end time before enabling it');
+  await patch('gdsb_promotions','id=eq.'+q(id),{enabled:next,updated_at:new Date().toISOString()});
+  break;
+ }
+ case 'promo-delete':{
+  const id=required(payload.id,'Promotion ID',60);
+  if(!/^[0-9a-f]{8}-[0-9a-f-]{27,}$/i.test(id))invalid('Invalid promotion ID');
+  await remove('gdsb_promotions','id=eq.'+q(id));
+  break;
+ }
  case 'promo-save':{
   const active=!!payload.active,start=payload.start||null,end=payload.end||null;
   if(active&&(!end||isNaN(new Date(end))))invalid('Choose a valid end date');if(active&&new Date(end)<=new Date())invalid('Promotion must end in the future');if(start&&end&&new Date(end)<=new Date(start))invalid('End must follow start');
