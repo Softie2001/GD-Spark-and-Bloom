@@ -5,6 +5,7 @@ import {renderProductPage} from '../lib/product-seo.js';
 
 process.env.SUPABASE_URL='https://example.supabase.co';
 process.env.SUPABASE_SERVICE_ROLE_KEY='testing-only';
+process.env.SUPABASE_ANON_KEY='testing-only';
 const settings={id:1,coupon_entry_enabled:false,inventory_enabled:false,inventory_show_quantity:false};
 const products=[
  {id:'p1',name:'Always orderable',price:4000,sale_price:null,in_stock:true,stock_quantity:0,hidden:false},
