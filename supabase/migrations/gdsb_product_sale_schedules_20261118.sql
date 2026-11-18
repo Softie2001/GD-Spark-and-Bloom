@@ -1,6 +1,5 @@
 -- GD Spark & Bloom only. Add optional start/end times to existing product sale prices.
 -- IMPORTANT: run on the GD Spark & Bloom Supabase project, never on Vendstal or Urapo.
-BEGIN;
 DO $
 BEGIN
  IF to_regclass('public.gdsb_products') IS NULL
@@ -124,4 +123,3 @@ $function$;
 REVOKE ALL ON FUNCTION public.gdsb_place_order(jsonb,jsonb) FROM PUBLIC,anon,authenticated;
 GRANT EXECUTE ON FUNCTION public.gdsb_place_order(jsonb,jsonb) TO service_role;
 NOTIFY pgrst, 'reload schema';
-COMMIT;
