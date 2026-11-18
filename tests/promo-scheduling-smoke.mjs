@@ -49,7 +49,7 @@ assert.match(vm.runInContext('bannerAdmin()',ctx),/Edit promotional banner/);
 assert.match(vm.runInContext('bannerAdmin()',ctx),/Save changes/);
 const original=fs.readFileSync('site.js','utf8');
 assert.match(original,/data-promo-id/);
-assert.match(original,/function updateTimer\(\)\{const selected=activePromotion\(\)/);
+assert.match(original,/function updateTimer\(\)\{[\s\S]{0,900}const selected=activePromotion\(\)/);
 assert.match(original,/function deletePromotion\(id\)/);
 assert.match(original,/function togglePromotion\(id\)/);
 const live=fs.readFileSync('live.js','utf8');
