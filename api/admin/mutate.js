@@ -15,15 +15,33 @@ export default async function handler(req,res){if(method(req,res,['POST']))retur
   const name=required(payload.name,'Product name',150),cat=required(payload.category,'Category',60);
   const price=money(payload.price),sale=payload.salePrice===null||payload.salePrice===0||payload.salePrice===''?null:money(payload.salePrice);
   if(price===null||price>100000000||sale!==null&&(sale===null||sale>=price))invalid('Check product prices');
+  const startRaw=payload.saleStartsAt||'',endRaw=payload.saleEndsAt||'';
+  const start=startRaw?new Date(startRaw):null,end=endRaw?new Date(endRaw):null;
+  if(start&&!Number.isFinite(start.getTime())||end&&!Number.isFinite(end.getTime()))invalid('Enter valid sale dates');
+  if(sale===null&&(start||end))invalid('Enter a sale price before scheduling it');
+  if(start&&!end)invalid('Scheduled sale needs an end date and time');
+  if(start&&end&&end<=start)invalid('Sale must end after it starts');
   const stockQuantity=Number(payload.availableQuantity);
   if(payload.availableQuantity===null||payload.availableQuantity===undefined||payload.availableQuantity===''||
      !Number.isSafeInteger(stockQuantity)||stockQuantity<0||stockQuantity>1000000)invalid('Enter a whole-number stock quantity between 0 and 1,000,000');
   const existing=await rows('gdsb_products',`select=id,image_url&id=eq.${q(id)}&limit=1`);
   await category(cat);
   const image=await picture(payload.image,existing[0]?.image_url||'');
-  const record={id,name,category:cat,description:tidy(payload.description,500),price,sale_price:sale,in_stock:!!payload.stock,stock_quantity:stockQuantity,best_seller:!!payload.bestseller,is_kit:!!payload.kit,hidden:!!payload.hidden,image_url:image,updated_at:new Date().toISOString()};
+  const record={id,name,category:cat,description:tidy(payload.description,500),price,sale_price:sale,sale_starts_at:sale?start?.toISOString()||null:null,sale_ends_at:sale?end?.toISOString()||null:null,in_stock:!!payload.stock,stock_quantity:stockQuantity,best_seller:!!payload.bestseller,is_kit:!!payload.kit,hidden:!!payload.hidden,image_url:image,updated_at:new Date().toISOString()};
   if(existing.length)await patch('gdsb_products',`id=eq.${q(id)}`,record);else await add('gdsb_products',record);
   result={id};break;
+ }
+ case 'product-sale-schedule':{
+  const ids=Array.isArray(payload.ids)?[...new Set(payload.ids.map(String))]:[];
+  if(!ids.length||ids.length>200||ids.some(id=>!/^[A-Za-z0-9_-]{1,80}$/.test(id)))invalid('Select between 1 and 200 products');
+  const start=payload.start?new Date(payload.start):null,end=payload.end?new Date(payload.end):null;
+  if(!end||!Number.isFinite(end.getTime())||end.getTime()<=Date.now())invalid('Select a future sale end date and time');
+  if(start&&(!Number.isFinite(start.getTime())||start>=end))invalid('Sale start must be before the end');
+  const chosen=await rows('gdsb_products','select=id,price,sale_price&id=in.('+ids.map(q).join(',')+')');
+  if(chosen.length!==ids.length||chosen.some(p=>!Number.isFinite(Number(p.sale_price))||Number(p.sale_price)<=0||Number(p.sale_price)>=Number(p.price)))invalid('All selected products must have a valid sale price first');
+  const record={sale_starts_at:start?start.toISOString():null,sale_ends_at:end.toISOString(),updated_at:new Date().toISOString()};
+  await patch('gdsb_products','id=in.('+ids.map(q).join(',')+')',record);
+  result={count:ids.length};break;
  }
  case 'product-toggle':{
   const key=String(payload.key),allowed={stock:'in_stock',bestseller:'best_seller',kit:'is_kit',hidden:'hidden'};if(!allowed[key])invalid('Invalid product property');const id=required(payload.id,'Product ID',80);
