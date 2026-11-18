@@ -53,5 +53,7 @@ assert.match(server,/await checkAdmin\(req\)/);
 assert.match(shop,/const unit=effectiveProductPrice\(p\)/);
 assert.match(migration,/Not a GD Spark & Bloom storefront database/);
 assert.match(migration,/ADD COLUMN IF NOT EXISTS sale_ends_at/);
-assert.doesNotMatch(migration,/UPDATE\s+public\.gdsb_products/i,'migration must preserve existing records');
+assert.doesNotMatch(migration,/UPDATE\s+public\.gdsb_products\s+SET\s+sale_price/i,'migration must preserve existing sale prices');
+assert.match(migration,/v_product\.sale_ends_at > now\(\)/,'atomic order placement must reject expired sale prices');
+assert.match(migration,/GRANT EXECUTE ON FUNCTION public\.gdsb_place_order\(jsonb,jsonb\) TO service_role/);
 console.log('PASS | Scheduled product sales, legacy prices, auto expiry, admin bulk scheduling, checkout evaluator, SEO, guarded migration');
