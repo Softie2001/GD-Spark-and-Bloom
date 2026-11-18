@@ -202,10 +202,22 @@ async function gdsbUploaded(f){
 saveProduct=async function(e){e.preventDefault();try{
  const d=new FormData(e.target);const quantityRaw=d.get('availableQuantity');
  if(quantityRaw===null||String(quantityRaw).trim()==='')throw Error('Enter the available product quantity');
+ const salePrice=Number(d.get('salePrice')||0),saleDates=saleDatePayload(d);
+ if(!salePrice&&(saleDates.saleStartsAt||saleDates.saleEndsAt))throw Error('Enter a sale price before setting sale dates');
  const upload=await gdsbUploaded(d.get('imageUpload'));
- const payload={id:editing||undefined,name:d.get('name'),category:d.get('category'),description:d.get('description'),price:Number(d.get('price')),salePrice:Number(d.get('salePrice')||0),availableQuantity:Number(d.get('availableQuantity')),stock:d.has('stock'),bestseller:d.has('bestseller'),kit:d.has('kit'),hidden:d.has('hidden'),image:upload||d.get('image')||''};
+ const payload={id:editing||undefined,name:d.get('name'),category:d.get('category'),description:d.get('description'),price:Number(d.get('price')),salePrice,...saleDates,availableQuantity:Number(d.get('availableQuantity')),stock:d.has('stock'),bestseller:d.has('bestseller'),kit:d.has('kit'),hidden:d.has('hidden'),image:upload||d.get('image')||''};
  if(await gdsbWrite('product-save',payload))location.href='/admin#products';
  }catch(err){toast(err.message)}};
+scheduleBulkSale=async function(e){
+ e.preventDefault();
+ try{
+  const ids=[...document.querySelectorAll('input[name="bulkSaleId"]:checked')].map(input=>input.value);
+  if(!ids.length)throw Error('Select products with sale prices first');
+  const d=new FormData(e.target),dates=saleDatePayload(d);
+  if(!dates.saleEndsAt||Date.parse(dates.saleEndsAt)<=Date.now())throw Error('Choose a future sale end date and time');
+  await gdsbWrite('product-sale-schedule',{ids,start:dates.saleStartsAt,end:dates.saleEndsAt});
+ }catch(error){toast(error.message)}
+};
 function createCategory(e){e.preventDefault();gdsbWrite('category-add',{name:new FormData(e.target).get('category')})}
 function renameCategory(old){const name=prompt('Rename category',old);if(name&&name.trim())gdsbWrite('category-rename',{old,name})}
 function deleteCategory(name){if(confirm('Delete category?'))gdsbWrite('category-delete',{name})}
