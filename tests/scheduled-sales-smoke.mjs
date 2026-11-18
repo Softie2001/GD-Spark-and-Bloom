@@ -33,7 +33,7 @@ const storage={getItem:k=>mem.get(k)||null,setItem:(k,v)=>mem.set(k,v),removeIte
 const document={getElementById:id=>id==='app'?app:null,querySelector:()=>null,querySelectorAll:()=>[],addEventListener(){},
  body:{appendChild(){},classList:{add(){},remove(){},toggle(){}}},createElement:()=>({classList:{add(){}},setAttribute(){},style:{}})};
 const ctx={window:{GDSB_EXPECT_BACKEND:true},document,console,Date,Math,Intl,JSON,Set,Map,Array,Promise,Number,String,
- sessionStorage:storage,localStorage:storage,location:{pathname:'/admin.html',hash:'#products',search:'',href:''},
+ sessionStorage:storage,localStorage:storage,URLSearchParams,location:{pathname:'/admin.html',hash:'#products',search:'',href:''},
  setInterval:()=>0,setTimeout:()=>0,clearInterval(){},requestAnimationFrame(){},navigator:{},structuredClone,FormData:class{}};
 ctx.window.document=document;ctx.window.location=ctx.location;
 vm.createContext(ctx);vm.runInContext(fs.readFileSync('site.js','utf8'),ctx,{timeout:3000});
