@@ -1,0 +1,59 @@
+import assert from 'node:assert/strict';
+import fs from 'node:fs';
+import vm from 'node:vm';
+import {saleActive,effectiveProductPrice} from '../lib/sale-pricing.js';
+import {cleanProduct} from '../lib/shop.js';
+import {renderProductPage} from '../lib/product-seo.js';
+const now=Date.now(),iso=ms=>new Date(ms).toISOString();
+const regular={id:'serum',name:'Herbal serum',category:'Care',price:10000,salePrice:7500,stock:true,hidden:false,image:''};
+assert.equal(saleActive(regular,now),true,'unscheduled existing sales keep working');
+assert.equal(effectiveProductPrice(regular,now),7500);
+const future={...regular,saleStartsAt:iso(now+60000),saleEndsAt:iso(now+120000)};
+assert.equal(saleActive(future,now),false,'sale not active before start');
+assert.equal(saleActive(future,now+60000),true,'sale starts at exact start instant');
+assert.equal(saleActive(future,now+120000),false,'sale ends exactly at end instant');
+assert.equal(effectiveProductPrice(future,now),10000);
+assert.equal(effectiveProductPrice(future,now+90000),7500);
+assert.equal(effectiveProductPrice(future,now+120000),10000,'returns to regular price automatically');
+assert.equal(saleActive({...regular,saleEndsAt:'invalid'},now),false,'malformed date never grants discount');
+assert.equal(saleActive({...regular,saleStartsAt:'invalid'},now),false);
+assert.equal(saleActive({...regular,salePrice:11000},now),false);
+assert.equal(saleActive({...regular,salePrice:0},now),false);
+const fromDb=cleanProduct({id:'serum',name:'Herbal serum',category:'Care',price:10000,sale_price:7500,
+ sale_starts_at:iso(now-60000),sale_ends_at:iso(now+60000),in_stock:true,stock_quantity:10,best_seller:false,hidden:false,is_kit:false,image_url:''});
+assert.equal(fromDb.saleStartsAt,iso(now-60000));
+assert.equal(fromDb.saleEndsAt,iso(now+60000));
+assert.equal(effectiveProductPrice(fromDb,now),7500);
+assert.equal(effectiveProductPrice(fromDb,now+61000),10000);
+const page=renderProductPage({...fromDb,saleStartsAt:iso(now+60000),saleEndsAt:iso(now+120000)});
+assert.match(page,/10,000/);
+assert.doesNotMatch(page,/<del>₦10,000<\/del>/,'future discount not advertised in SEO page');
+const mem=new Map(),app={innerHTML:''};
+const storage={getItem:k=>mem.get(k)||null,setItem:(k,v)=>mem.set(k,v),removeItem:k=>mem.delete(k)};
+const document={getElementById:id=>id==='app'?app:null,querySelector:()=>null,querySelectorAll:()=>[],addEventListener(){},
+ body:{appendChild(){},classList:{add(){},remove(){},toggle(){}}},createElement:()=>({classList:{add(){}},setAttribute(){},style:{}})};
+const ctx={window:{GDSB_EXPECT_BACKEND:true},document,console,Date,Math,Intl,JSON,Set,Map,Array,Promise,Number,String,
+ sessionStorage:storage,localStorage:storage,URLSearchParams,location:{pathname:'/admin.html',hash:'#products',search:'',href:''},
+ setInterval:()=>0,setTimeout:()=>0,clearInterval(){},requestAnimationFrame(){},navigator:{},structuredClone,FormData:class{}};
+ctx.window.document=document;ctx.window.location=ctx.location;
+vm.createContext(ctx);vm.runInContext(fs.readFileSync('site.js','utf8'),ctx,{timeout:3000});
+ctx.product=fromDb;ctx.time=now;
+assert.equal(vm.runInContext('isSale(product,time)',ctx),true);
+ctx.time=now+61000;
+assert.equal(vm.runInContext('isSale(product,time)',ctx),false);
+assert.equal(vm.runInContext('saleState(product,time)',ctx),'Ended');
+assert.match(vm.runInContext('productsAdmin()',ctx),/Schedule multiple product sale prices/);
+assert.match(vm.runInContext('productFormAdmin()',ctx),/Sale ends \(date & time\)/);
+const live=fs.readFileSync('live.js','utf8'),server=fs.readFileSync('api/admin/mutate.js','utf8'),
+ shop=fs.readFileSync('lib/shop.js','utf8'),migration=fs.readFileSync('supabase/migrations/gdsb_product_sale_schedules_20261118.sql','utf8');
+assert.match(live,/product-sale-schedule/);
+assert.match(live,/saleDatePayload\(d\)/);
+assert.match(server,/case 'product-sale-schedule'/);
+assert.match(server,/await checkAdmin\(req\)/);
+assert.match(shop,/const unit=effectiveProductPrice\(p\)/);
+assert.match(migration,/Not a GD Spark & Bloom storefront database/);
+assert.match(migration,/ADD COLUMN IF NOT EXISTS sale_ends_at/);
+assert.doesNotMatch(migration,/UPDATE\s+public\.gdsb_products\s+SET\s+sale_price/i,'migration must preserve existing sale prices');
+assert.match(migration,/v_product\.sale_ends_at > now\(\)/,'atomic order placement must reject expired sale prices');
+assert.match(migration,/GRANT EXECUTE ON FUNCTION public\.gdsb_place_order\(jsonb,jsonb\) TO service_role/);
+console.log('PASS | Scheduled product sales, legacy prices, auto expiry, admin bulk scheduling, checkout evaluator, SEO, guarded migration');
