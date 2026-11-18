@@ -1,6 +1,6 @@
 -- GD Spark & Bloom only. Add optional start/end times to existing product sale prices.
 -- IMPORTANT: run on the GD Spark & Bloom Supabase project, never on Vendstal or Urapo.
-DO $
+DO $$
 BEGIN
  IF to_regclass('public.gdsb_products') IS NULL
     OR to_regclass('public.gdsb_settings') IS NULL
