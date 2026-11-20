@@ -260,7 +260,7 @@ function saveBank(e){e.preventDefault();const d=new FormData(e.target);gdsbWrite
 function saveReview(e){e.preventDefault();const d=new FormData(e.target);gdsbWrite('review-add',{author:d.get('author'),location:d.get('location'),text:d.get('text'),rating:Number(d.get('rating')),consent:d.has('consent')})}
 function toggleReview(id){gdsbWrite('review-toggle',{id})}
 function deleteReview(id){if(confirm('Delete review?'))gdsbWrite('review-delete',{id})}
-function setOrderStatus(id,status,withWhatsapp){const target=db.orders.find(o=>o.id===id);gdsbWrite('order-status',{id,status}).then(ok=>{if(ok&&withWhatsapp&&target){const m=status==='Payment confirmed'?'confirmed':status==='Payment not confirmed'?'rejected':status==='Out for delivery'?'delivery':status==='Delivered'?'delivered':'generic';wa(orderMsg(target,m))}})}
+function setOrderStatus(id,status,withWhatsapp){const target=db.orders.find(o=>o.id===id);gdsbWrite('order-status',{id,status}).then(ok=>{if(ok&&withWhatsapp&&target){const m=status==='Payment confirmed'?'confirmed':status==='Payment not confirmed'?'rejected':status==='Out for delivery'?'delivery':status==='Delivered'?'delivered':'generic';messageOrderCustomer(id,m)}})}
 
 async function gdsbBootstrap(){
  try{
