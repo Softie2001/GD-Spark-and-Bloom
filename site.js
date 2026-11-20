@@ -24,6 +24,27 @@ function save(){try{localStorage.setItem(STORAGE_KEY,JSON.stringify(db))}catch{t
 function cartSave(){sessionStorage.setItem('gdsb_cart',JSON.stringify(cart))}
 function toast(s){document.querySelector('.toast')?.remove();let e=document.createElement('div');e.className='toast';e.textContent=s;document.body.appendChild(e);setTimeout(()=>e.remove(),3000)}
 function wa(msg){window.open('https://wa.me/'+WA+'?text='+encodeURIComponent(msg),'_blank','noopener')}
+// Admin-to-customer messages must use the stored customer's WhatsApp number,
+// not the shop's public support number used by storefront enquiries.
+function customerWhatsAppNumber(raw){
+ const digits=String(raw??'').replace(/[^0-9]/g,'');
+ if(/^0[789][01][0-9]{8}$/.test(digits))return '234'+digits.slice(1);
+ if(/^[789][01][0-9]{8}$/.test(digits))return '234'+digits;
+ if(/^234[789][01][0-9]{8}$/.test(digits))return digits;
+ return '';
+}
+function customerWhatsAppUrl(order,type='generic'){
+ const number=customerWhatsAppNumber(order?.customer?.phone);
+ if(!number)return '';
+ return 'https://wa.me/'+number+'?text='+encodeURIComponent(orderMsg(order,type));
+}
+function messageOrderCustomer(id,type='generic'){
+ const order=db.orders.find(o=>o.id===id);
+ if(!order)return toast('Order not found');
+ const url=customerWhatsAppUrl(order,type);
+ if(!url)return toast('Customer WhatsApp number is missing or invalid. Check the number on this order.');
+ window.open(url,'_blank','noopener');
+}
 function nav(to){if(to==='admin'){location.href='/admin';return}location.href=(to==='home'?'index':to)+'.html'}
 
 function isSale(p,n=Date.now()){
@@ -140,7 +161,7 @@ function adminContent(){if(adminTab==='overview')return overview();if(adminTab==
 function overview(){let paid=db.orders.filter(o=>['Payment confirmed','Preparing order','Out for delivery','Delivered'].includes(o.status)),pending=db.orders.filter(o=>o.status==='Pending verification');return `<div class="statgrid"><div class="stat"><small>Total orders</small><strong>${db.orders.length}</strong></div><div class="stat"><small>Awaiting verification</small><strong>${pending.length}</strong></div><div class="stat"><small>Confirmed order value</small><strong>${fmt(paid.reduce((n,o)=>n+o.total,0))}</strong></div><div class="stat"><small>Visible products</small><strong>${db.products.filter(p=>!p.hidden).length}</strong></div></div><div class="admin-layout"><div class="card"><h2 class="admin-panel-title">Recent orders</h2>${db.orders.length?db.orders.slice(0,5).map(o=>`<div class="line-item"><div class="grow"><b>${esc(o.id)} · ${esc(o.customer.name)}</b><small>${new Date(o.createdAt).toLocaleString('en-NG')} · ${fmt(o.total)}</small></div><span class="status ${o.status==='Delivered'?'ok':''}">${esc(o.status)}</span></div>`).join(''):`<p class="muted">No orders have been placed in this demo.</p>`}<button class="btn btn-secondary" style="margin-top:15px" onclick="adminTab='orders';render()">Manage orders ${icon('arrow')}</button></div><div class="card"><h2 class="admin-panel-title">Quick actions</h2><p class="muted">Make updates to your shop without touching any code.</p><button class="btn btn-primary" style="width:100%;margin:9px 0" onclick="location.href='/admin-product'">${icon('plus')} Add a product</button><button class="btn btn-secondary" style="width:100%;margin:7px 0" onclick="adminTab='banner';render()">Manage sale banner</button><button class="btn btn-outline" style="width:100%;margin:7px 0" onclick="adminTab='coupons';render()">Create coupon</button></div></div>`}
 const statuses=['Pending verification','Payment confirmed','Payment not confirmed','Preparing order','Out for delivery','Delivered'];
 function orderMsg(o,type){let c=o.customer;if(type==='confirmed')return `Hello ${c.name}, this is GD Spark & Bloom. We have verified your payment of ${fmt(o.total)} for order ${o.id}. Thank you! We will discuss your delivery fee and arrangements with you here.`;if(type==='rejected')return `Hello ${c.name}, this is GD Spark & Bloom. We could not verify the payment receipt for order ${o.id} (${fmt(o.total)}). Please reply with your transfer details so we can review it. Do not make a second payment until we advise you.`;if(type==='delivery')return `Hello ${c.name}, your GD Spark & Bloom order ${o.id} has been sent for delivery. We'll share your delivery details here. Thank you for shopping with us!`;if(type==='delivered')return `Hello ${c.name}, our records show your GD Spark & Bloom order ${o.id} as delivered. Thank you for choosing us!`;return `Hello ${c.name}, this is GD Spark & Bloom about your order ${o.id}.`}
-function setOrderStatus(id,status,withWhatsapp){let o=db.orders.find(o=>o.id===id);if(!o)return;o.status=status;save();render();toast('Order marked: '+status);if(withWhatsapp){let typ=status==='Payment confirmed'?'confirmed':status==='Payment not confirmed'?'rejected':status==='Out for delivery'?'delivery':status==='Delivered'?'delivered':'generic';wa(orderMsg(o,typ))}}
+function setOrderStatus(id,status,withWhatsapp){let o=db.orders.find(o=>o.id===id);if(!o)return;o.status=status;save();render();toast('Order marked: '+status);if(withWhatsapp){let typ=status==='Payment confirmed'?'confirmed':status==='Payment not confirmed'?'rejected':status==='Out for delivery'?'delivery':status==='Delivered'?'delivered':'generic';messageOrderCustomer(id,typ)}}
 /* GD Spark & Bloom | accessible, collapsible order review cards */
 const gdsbOpenOrderCards = new Set();
 function gdsbRememberOrderCard(el){
@@ -216,7 +237,7 @@ function ordersAdmin(){
             <button type="button" class="gdsb-order-action" onclick="setOrderStatus('${orderId}','Preparing order',false)">Preparing</button>
             <button type="button" class="gdsb-order-action" onclick="setOrderStatus('${orderId}','Out for delivery',true)">Out for delivery</button>
             <button type="button" class="gdsb-order-action" onclick="setOrderStatus('${orderId}','Delivered',true)">Mark delivered</button>
-            <button type="button" class="gdsb-order-action" onclick="wa(orderMsg(db.orders.find(x=>x.id==='${orderId}'),'generic'))">WhatsApp customer</button>
+            <button type="button" class="gdsb-order-action" onclick="messageOrderCustomer('${orderId}','generic')">WhatsApp customer</button>
           </div>
         </section>
       </div>
