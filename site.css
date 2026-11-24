@@ -948,32 +948,33 @@ body.gdsb-order-confirm-open{overflow:hidden}
 @media(max-width:900px){.gdsb-promo-list{grid-template-columns:1fr}}
 @media(max-width:440px){.gdsb-promo-item{flex-direction:column}.gdsb-promo-preview{width:100%;min-width:0;aspect-ratio:2.2}.gdsb-promo-actions{gap:6px}}
 
-/* Compact product administration. Keep stock controls and cards in one clear flow. */
+/* Compact product management: price + status above a full-width quantity row. */
 .gdsb-products-top{min-width:0}
-.gdsb-products-toolbar{display:flex;align-items:center;justify-content:space-between;flex-wrap:wrap;gap:12px;margin:16px 0}
+.gdsb-products-toolbar{display:flex;align-items:center;justify-content:space-between;flex-wrap:wrap;gap:12px;margin:12px 0 16px}
 .gdsb-products-toolbar strong{font-size:16px}
-.gdsb-admin-product-grid{display:grid;grid-template-columns:repeat(2,minmax(0,1fr));gap:15px;margin-bottom:24px}
-.gdsb-admin-product-card{min-width:0;background:#fff;border:1px solid #e4e4df;border-radius:20px;padding:20px;display:flex;flex-direction:column;gap:16px}
+.gdsb-admin-product-grid{display:grid;grid-template-columns:repeat(2,minmax(0,1fr));gap:14px;margin-bottom:24px}
+.gdsb-admin-product-card{min-width:0;background:#fff;border:1px solid #e4e4df;border-radius:18px;padding:17px;display:flex;flex-direction:column;gap:13px}
 .gdsb-admin-product-heading{display:flex;align-items:center;gap:12px;min-width:0}
-.gdsb-admin-product-heading img{width:64px;height:64px;flex:0 0 64px;object-fit:cover;border-radius:14px;background:#f5f3e7}
+.gdsb-admin-product-heading img{width:58px;height:58px;flex:0 0 58px;object-fit:cover;border-radius:12px;background:#f5f3e7}
 .gdsb-admin-product-heading>div{min-width:0}
-.gdsb-admin-product-heading h3{margin:0 0 4px;font-size:19px;line-height:1.3;overflow-wrap:anywhere}
-.gdsb-admin-product-heading small,.gdsb-admin-product-price small{font-size:12px;color:#77756d;overflow-wrap:anywhere}
-.gdsb-admin-product-body{display:grid;grid-template-columns:1fr 1fr;align-items:start;gap:16px}
-.gdsb-admin-product-price{display:flex;flex-direction:column;align-items:flex-start;gap:5px;padding-top:4px;min-width:0}
-.gdsb-admin-product-price del{color:#777;line-height:1.3;font-size:17px}
-.gdsb-admin-product-price strong{font-size:clamp(19px,2.1vw,25px);line-height:1.2;white-space:nowrap}
-.gdsb-admin-product-stock{display:flex;flex-direction:column;gap:8px;min-width:0}
-.gdsb-admin-product-status{align-self:flex-start;display:inline-flex;align-items:center;border-radius:100px;background:#e5f4e9;color:#155b37;font-weight:800;padding:8px 12px;font-size:12px}
+.gdsb-admin-product-heading h3{margin:0 0 3px;font-size:18px;line-height:1.25;overflow-wrap:anywhere}
+.gdsb-admin-product-heading small,.gdsb-admin-product-price small{font-size:12px;color:#77756d;line-height:1.45;overflow-wrap:anywhere}
+.gdsb-admin-product-body{display:grid;grid-template-columns:minmax(0,1fr) minmax(0,1fr);align-items:center;gap:12px}
+.gdsb-admin-product-price{display:flex;flex-direction:column;align-items:flex-start;justify-content:center;gap:4px;min-width:0}
+.gdsb-admin-product-price del{color:#777;line-height:1.2;font-size:15px}
+.gdsb-admin-product-price strong{font-size:clamp(19px,2vw,24px);line-height:1.2;white-space:nowrap}
+.gdsb-admin-product-stock{display:flex;flex-direction:column;gap:6px;min-width:0;align-items:flex-start}
+.gdsb-admin-product-status{display:inline-flex;align-items:center;border-radius:100px;background:#e5f4e9;color:#155b37;font-weight:800;padding:7px 11px;font-size:12px}
 .gdsb-admin-product-status.out{background:#f8e6e6;color:#872929}
-.gdsb-admin-product-stock-mode{font-size:13px;color:#595b50;font-weight:650}
-.gdsb-admin-product-stock label{font-size:12px;font-weight:700;color:#63665a}
-.gdsb-admin-product-quantity{display:flex;gap:8px;align-items:center;min-width:0}
-.gdsb-admin-product-quantity input{width:100%;min-width:0;padding:11px 10px;border:1px solid #cfd9cf;border-radius:12px;font:inherit;background:#fff}
-.gdsb-admin-product-quantity .mini-btn{padding:11px 12px;white-space:nowrap}
-.gdsb-admin-product-actions{display:grid;grid-template-columns:1fr 1fr;gap:9px;margin-top:auto}
-.gdsb-admin-product-actions button{border:0;border-radius:13px;padding:13px 9px;background:#edf4ef;color:#12482f;font:700 14px/1.3 inherit;cursor:pointer;min-height:46px}
+.gdsb-admin-product-stock-mode{font-size:12px;color:#595b50;font-weight:650}
+.gdsb-admin-product-quantity-row{grid-column:1/-1;display:grid;grid-template-columns:auto minmax(0,1fr);align-items:center;gap:12px;border-top:1px solid #eeeae2;padding-top:11px;min-width:0}
+.gdsb-admin-product-quantity-row label{font-size:12px;font-weight:700;color:#63665a;max-width:105px}
+.gdsb-admin-product-quantity{display:flex;align-items:center;gap:8px;min-width:0}
+.gdsb-admin-product-quantity input{flex:1;min-width:0;width:100%;padding:10px 11px;border:1px solid #cfd9cf;border-radius:11px;font:inherit;background:#fff}
+.gdsb-admin-product-quantity .mini-btn{padding:10px 14px;white-space:nowrap}
+.gdsb-admin-product-actions{display:grid;grid-template-columns:repeat(4,minmax(0,1fr));gap:8px;margin-top:auto}
+.gdsb-admin-product-actions button{border:0;border-radius:12px;padding:11px 6px;background:#edf4ef;color:#12482f;font-size:13px;font-weight:700;line-height:1.3;font-family:inherit;cursor:pointer;min-height:43px}
 .gdsb-admin-product-actions button.danger{background:#faebed;color:#8e2631}
 .gdsb-admin-product-actions button:focus-visible{outline:3px solid #ffe000;outline-offset:2px}
-@media(max-width:850px){.gdsb-admin-product-grid{grid-template-columns:1fr}}
-@media(max-width:480px){.gdsb-admin-product-card{padding:15px;border-radius:17px;gap:13px}.gdsb-admin-product-heading img{width:55px;height:55px;flex-basis:55px}.gdsb-admin-product-heading h3{font-size:17px}.gdsb-admin-product-body{gap:10px}.gdsb-admin-product-price strong{font-size:21px}.gdsb-admin-product-actions button{font-size:13px;padding:12px 8px}.gdsb-admin-product-quantity{flex-wrap:wrap}.gdsb-admin-product-quantity .mini-btn{width:100%}}
+@media(max-width:940px){.gdsb-admin-product-grid{grid-template-columns:1fr}}
+@media(max-width:480px){.gdsb-admin-product-card{padding:14px;gap:12px}.gdsb-admin-product-heading img{width:54px;height:54px;flex-basis:54px}.gdsb-admin-product-heading h3{font-size:17px}.gdsb-admin-product-price strong{font-size:21px}.gdsb-admin-product-quantity-row{grid-template-columns:1fr;gap:6px}.gdsb-admin-product-quantity-row label{max-width:none}.gdsb-admin-product-actions{grid-template-columns:repeat(2,minmax(0,1fr))}.gdsb-admin-product-actions button{font-size:13px}}
