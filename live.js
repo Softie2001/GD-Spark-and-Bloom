@@ -178,6 +178,13 @@ function setInventoryMode(checked){
 function setStockVisibility(checked){
  gdsbWrite('inventory-settings',{inventoryEnabled:db.inventoryEnabled!==false,inventoryShowQuantity:!!checked}).then(ok=>{if(!ok)render()});
 }
+saveProductQuantity=async function(id){
+ const product=db.products.find(p=>p.id===id),input=document.getElementById('quantity-'+id);
+ const quantity=Number(input?.value);
+ if(!product)return toast('Product not found');
+ if(!Number.isSafeInteger(quantity)||quantity<0||quantity>1000000)return toast('Enter a valid quantity between 0 and 1,000,000');
+ await gdsbWrite('product-quantity',{id,quantity});
+};
 function toggleProd(id,key){gdsbWrite('product-toggle',{id,key})}
 function deleteProd(id){if(confirm('Delete this product?'))gdsbWrite('product-delete',{id})}
 // Only signed-in store admins may request an upload signature. Images bypass the
