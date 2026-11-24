@@ -163,6 +163,14 @@ function gdsbCloseOrderSuccess(){
 
 function successPage(){const o=JSON.parse(sessionStorage.getItem('gdsb_order_result')||'null');return `<main class="page wrap"><div class="card" style="max-width:640px;margin:auto;text-align:center"><h1>Order received</h1><p>Order reference: <b>${esc(o?.id||'')}</b></p><p>Your receipt is awaiting manual verification. This does not confirm that the transfer was received.</p><p>Delivery details and charges are discussed with the vendor on WhatsApp.</p><button class="btn btn-primary" onclick="wa('Hello GD Spark & Bloom, I just submitted order ${esc(o?.id||'')} for ${fmt(o?.total||0)}. Please check my payment receipt.')">Message seller</button><p><a href="index.html">Continue shopping</a></p></div></main>`}
 async function gdsbWrite(action,payload){try{await gdsbApi('admin/mutate',{method:'POST',body:JSON.stringify({action,payload})});await gdsbLoadAdmin();toast('Saved');return true}catch(error){toast(error.message);return false}}
+saveGlobalSale=async function(e){
+ e.preventDefault();
+ const d=new FormData(e.target),percent=Number(d.get('percent')),start=new Date(d.get('start')),end=new Date(d.get('end'));
+ if(!Number.isInteger(percent)||percent<1||percent>99)return toast('Enter a whole-number discount between 1 and 99');
+ if(!Number.isFinite(start.getTime())||!Number.isFinite(end.getTime())||end<=start)return toast('Sale end must be later than start');
+ if(d.has('enabled')&&end.getTime()<=Date.now())return toast('Choose a future end time for enabled sales');
+ await gdsbWrite('global-sale-save',{enabled:d.has('enabled'),percent,start:start.toISOString(),end:end.toISOString(),promotionId:String(d.get('promotionId')||'')});
+};
 function setInventoryMode(checked){
  if(checked&&!confirm('Enable stock limits? Products with 0 available units will become sold out until you enter their quantities.')){render();return}
  gdsbWrite('inventory-settings',{inventoryEnabled:!!checked,inventoryShowQuantity:!!db.inventoryShowQuantity}).then(ok=>{if(!ok)render()});
