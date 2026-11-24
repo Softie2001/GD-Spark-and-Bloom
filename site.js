@@ -92,7 +92,7 @@ function globalSalePanel(){
  <div class="form-field"><label>Discount on every product (%) *</label><input name="percent" type="number" min="1" max="99" step="1" required value="${Number(g.percent)||''}"></div>
  <div class="form-field"><label>Use promotional banner dates (optional)</label>
  <select name="promotionId" onchange="copyGlobalSaleCampaign(this.value)"><option value="">Set my own dates</option>${promoList().filter(p=>p.start&&p.end).map(p=>`<option value="${esc(p.id)}" ${g.promotionId===p.id?'selected':''}>${esc(p.title)}</option>`).join('')}</select>
- <small class="small-note">Selecting a banner copies its dates. You can adjust them before saving.</small></div>
+ <small class="small-note">Selecting a banner links its dates to this sale. Future changes to that banner's dates will also update this discount. Select 'Set my own dates' to use independent dates.</small></div>
  <div class="form-grid"><div class="form-field"><label>Start date & time *</label><input name="start" type="datetime-local" required value="${esc(promoLocalTime(g.start))}"></div><div class="form-field"><label>End date & time *</label><input name="end" type="datetime-local" required value="${esc(promoLocalTime(g.end))}"></div></div>
  <div class="settings-toggles"><label><input type="checkbox" name="enabled" ${g.enabled?'checked':''}> Enable automatic sale (uncheck to turn off)</label></div>
  <button class="btn btn-primary" type="submit">Save automatic discount</button></form></section>`;
