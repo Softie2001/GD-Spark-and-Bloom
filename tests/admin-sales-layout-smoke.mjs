@@ -10,7 +10,14 @@ ctx.sale={enabled:false,percent:20,start:'2026-11-30T00:00:00Z',end:'2026-12-12T
 vm.runInContext('db.products=[sample];db.globalSale=sale;db.promotions=[];db.inventoryEnabled=false;db.inventoryShowQuantity=false',ctx);
 const products=vm.runInContext('productsAdmin()',ctx),banner=vm.runInContext('bannerAdmin()',ctx);
 assert.match(products,/Stock controls/);
-assert.match(products,/Add new product/);
+assert.match(products,/Add product/);
+assert.match(products,/gdsb-admin-product-card/);
+assert.match(products,/saveProductQuantity/);
+assert.match(products,/Available quantity/);
+assert.match(products,/Out of stock/);
+assert.doesNotMatch(products,/<table/);
+assert.match(fs.readFileSync('live.js','utf8'),/gdsbWrite\('product-quantity'/);
+assert.match(fs.readFileSync('api/admin/mutate.js','utf8'),/case 'product-quantity'/);
 assert.match(products,/Sample product/);
 assert.doesNotMatch(products,/Automatic percentage sale/);
 assert.doesNotMatch(products,/Schedule multiple product sale prices/);
