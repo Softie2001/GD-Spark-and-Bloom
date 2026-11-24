@@ -1,0 +1,11 @@
+import assert from 'node:assert/strict';
+import fs from 'node:fs';
+const css=fs.readFileSync('site.css','utf8'),js=fs.readFileSync('site.js','utf8'),live=fs.readFileSync('live.js','utf8');
+assert.match(js,/class="gdsb-admin-product-quantity-row"/);
+assert.match(css,/\.gdsb-admin-product-quantity-row\{grid-column:1\/-1/);
+assert.match(css,/\.gdsb-admin-product-actions\{display:grid;grid-template-columns:repeat\(4/);
+assert.match(css,/@media\(max-width:480px\).*gdsb-admin-product-actions\{grid-template-columns:repeat\(2/s);
+assert.match(js,/onclick="saveProductQuantity/);
+assert.match(live,/gdsbWrite\('product-quantity'/);
+assert.ok(js.indexOf('gdsb-admin-product-price')<js.indexOf('gdsb-admin-product-quantity-row'));
+console.log('PASS | Mobile product card no dead left column, quantity spans full width, actions and data preserved');
