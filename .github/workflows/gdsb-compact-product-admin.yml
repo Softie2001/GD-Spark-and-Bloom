@@ -1,0 +1,16 @@
+name: GD compact product admin checks
+on:
+  push:
+    branches:
+      - fix/gdsb-product-admin-compact-cards-20261124
+permissions:
+  contents: read
+jobs:
+  qa:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@11bd71901bbe5b1630ceea73d27597364c9af683
+        with:
+          persist-credentials: false
+      - run: npm run check
+      - run: npm test
