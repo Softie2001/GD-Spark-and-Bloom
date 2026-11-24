@@ -43,6 +43,14 @@ export default async function handler(req,res){if(method(req,res,['POST']))retur
   await patch('gdsb_products','id=in.('+ids.map(q).join(',')+')',record);
   result={count:ids.length};break;
  }
+ case 'product-quantity':{
+  const id=required(payload.id,'Product ID',80),qty=Number(payload.quantity);
+  if(!/^[a-zA-Z0-9_-]+$/.test(id)||!Number.isSafeInteger(qty)||qty<0||qty>1000000)invalid('Invalid product or available quantity');
+  const found=await rows('gdsb_products','select=id&id=eq.'+q(id)+'&limit=1');
+  if(!found.length)invalid('Product not found');
+  await patch('gdsb_products','id=eq.'+q(id),{stock_quantity:qty,updated_at:new Date().toISOString()});
+  result={updated:true};break;
+ }
  case 'product-toggle':{
   const key=String(payload.key),allowed={stock:'in_stock',bestseller:'best_seller',kit:'is_kit',hidden:'hidden'};if(!allowed[key])invalid('Invalid product property');const id=required(payload.id,'Product ID',80);
   const found=await rows('gdsb_products',`select=*&id=eq.${q(id)}&limit=1`);if(!found.length)invalid('Product not found');
