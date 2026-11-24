@@ -58,6 +58,23 @@ export default async function handler(req,res){if(method(req,res,['POST']))retur
  case 'category-delete':{
   const name=required(payload.name,'Category name',60);const products=await rows('gdsb_products',`select=id&category=eq.${q(name)}&limit=1`);if(products.length)invalid('Reassign category products first');await remove('gdsb_categories',`name=eq.${q(name)}`);break
  }
+ case 'global-sale-save':{
+  const percent=Number(payload.percent),enabled=payload.enabled;
+  let start=payload.start?new Date(payload.start):null,end=payload.end?new Date(payload.end):null;
+  if(typeof enabled!=='boolean'||!Number.isInteger(percent)||percent<1||percent>99)invalid('Choose a whole-number discount between 1% and 99%');
+  if(!start||!end||!Number.isFinite(start.getTime())||!Number.isFinite(end.getTime())||end<=start)invalid('Sale end must be later than start');
+  if(enabled&&end.getTime()<=Date.now())invalid('Enabled sale must end in the future');
+  const promotionId=payload.promotionId||null;
+  if(promotionId){
+   if(!/^[0-9a-f-]{36}$/i.test(promotionId))invalid('Invalid promotional banner');
+   const found=await rows('gdsb_promotions','select=id,starts_at,ends_at&id=eq.'+q(promotionId)+'&limit=1');
+   if(found.length!==1||!found[0].starts_at||!found[0].ends_at)invalid('Select a banner with a start and end date');
+   start=new Date(found[0].starts_at);end=new Date(found[0].ends_at);
+   if(enabled&&end.getTime()<=Date.now())invalid('Selected banner schedule has already ended');
+  }
+  await patch('gdsb_settings','id=eq.1',{global_sale_enabled:enabled,global_sale_percent:percent,global_sale_starts_at:start.toISOString(),global_sale_ends_at:end.toISOString(),global_sale_promotion_id:promotionId,updated_at:new Date().toISOString()});
+  result={saved:true};break;
+ }
  case 'inventory-settings':{
   if(typeof payload.inventoryEnabled!=='boolean'||typeof payload.inventoryShowQuantity!=='boolean')invalid('Invalid stock control settings');
   await patch('gdsb_settings','id=eq.1',{inventory_enabled:payload.inventoryEnabled,inventory_show_quantity:payload.inventoryShowQuantity,updated_at:new Date().toISOString()});break;
@@ -99,8 +116,16 @@ export default async function handler(req,res){if(method(req,res,['POST']))retur
   const record={title,subtitle:tidy(payload.subtitle,160),image_url:image,
     starts_at:start?start.toISOString():null,ends_at:end?end.toISOString():null,
     enabled:active,countdown,updated_at:new Date().toISOString()};
-  if(isEdit)await patch('gdsb_promotions','id=eq.'+q(id),record);
-  else await add('gdsb_promotions',record);
+  if(isEdit){
+   const linked=await rows('gdsb_settings','select=id,global_sale_enabled,global_sale_promotion_id&id=eq.1&limit=1');
+   if(linked[0]?.global_sale_promotion_id===id){
+    if(!start||!end)invalid('This banner is linked to the global discount. Set both start and end dates or unlink the sale first.');
+    if(linked[0].global_sale_enabled&&end.getTime()<=Date.now())invalid('Linked discount needs a future end date. Disable the global sale first.');
+   }
+   await patch('gdsb_promotions','id=eq.'+q(id),record);
+   if(linked[0]?.global_sale_promotion_id===id)
+    await patch('gdsb_settings','id=eq.1',{global_sale_starts_at:record.starts_at,global_sale_ends_at:record.ends_at,updated_at:new Date().toISOString()});
+  }else await add('gdsb_promotions',record);
   break;
  }
  case 'promo-toggle':{
@@ -117,6 +142,9 @@ export default async function handler(req,res){if(method(req,res,['POST']))retur
  case 'promo-delete':{
   const id=required(payload.id,'Promotion ID',60);
   if(!/^[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12}$/i.test(id))invalid('Invalid promotion ID');
+  const linked=await rows('gdsb_settings','select=global_sale_promotion_id&id=eq.1&limit=1');
+  if(linked[0]?.global_sale_promotion_id===id)
+   await patch('gdsb_settings','id=eq.1',{global_sale_promotion_id:null,updated_at:new Date().toISOString()});
   await remove('gdsb_promotions','id=eq.'+q(id));
   break;
  }

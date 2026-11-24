@@ -50,7 +50,7 @@ assert.match(live,/product-sale-schedule/);
 assert.match(live,/saleDatePayload\(d\)/);
 assert.match(server,/case 'product-sale-schedule'/);
 assert.match(server,/await checkAdmin\(req\)/);
-assert.match(shop,/const unit=effectiveProductPrice\(p\)/);
+assert.match(shop,/const unit=priceWithGlobalSale\(p,/);
 assert.match(migration,/Not a GD Spark & Bloom storefront database/);
 assert.match(migration,/ADD COLUMN IF NOT EXISTS sale_ends_at/);
 assert.doesNotMatch(migration,/UPDATE\s+public\.gdsb_products\s+SET\s+sale_price/i,'migration must preserve existing sale prices');

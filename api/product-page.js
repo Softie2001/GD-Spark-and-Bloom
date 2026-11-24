@@ -13,6 +13,6 @@ export default async function handler(req,res){
   if(!found.length)return res.status(404).setHeader('X-Robots-Tag','noindex').send('<!doctype html><title>Product not found</title><h1>Product not found</h1><a href="/shop.html">Shop all products</a>');
   res.setHeader('Cache-Control','no-store');
   res.setHeader('X-Robots-Tag','index, follow');
-  return res.status(200).send(renderProductPage(cleanProduct(found[0],s.inventory_enabled!==false),{inventoryEnabled:s.inventory_enabled!==false,inventoryShowQuantity:s.inventory_show_quantity===true}));
+  return res.status(200).send(renderProductPage(cleanProduct(found[0],s.inventory_enabled!==false),{inventoryEnabled:s.inventory_enabled!==false,inventoryShowQuantity:s.inventory_show_quantity===true,globalSale:{enabled:s.global_sale_enabled,percent:s.global_sale_percent,start:s.global_sale_starts_at,end:s.global_sale_ends_at}}));
  }catch(error){console.error('Public product page failed',error?.message||'unknown');return res.status(503).setHeader('X-Robots-Tag','noindex').send('<!doctype html><title>Store temporarily unavailable</title><h1>Store temporarily unavailable</h1>')}
 }
