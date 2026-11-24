@@ -58,6 +58,21 @@ export default async function handler(req,res){if(method(req,res,['POST']))retur
  case 'category-delete':{
   const name=required(payload.name,'Category name',60);const products=await rows('gdsb_products',`select=id&category=eq.${q(name)}&limit=1`);if(products.length)invalid('Reassign category products first');await remove('gdsb_categories',`name=eq.${q(name)}`);break
  }
+ case 'global-sale-save':{
+  const percent=Number(payload.percent),enabled=payload.enabled;
+  const start=payload.start?new Date(payload.start):null,end=payload.end?new Date(payload.end):null;
+  if(typeof enabled!=='boolean'||!Number.isInteger(percent)||percent<1||percent>99)invalid('Choose a whole-number discount between 1% and 99%');
+  if(!start||!end||!Number.isFinite(start.getTime())||!Number.isFinite(end.getTime())||end<=start)invalid('Sale end must be later than start');
+  if(enabled&&end.getTime()<=Date.now())invalid('Enabled sale must end in the future');
+  const promotionId=payload.promotionId||null;
+  if(promotionId){
+   if(!/^[0-9a-f-]{36}$/i.test(promotionId))invalid('Invalid promotional banner');
+   const found=await rows('gdsb_promotions','select=id&id=eq.'+q(promotionId)+'&limit=1');
+   if(found.length!==1)invalid('Promotional banner not found');
+  }
+  await patch('gdsb_settings','id=eq.1',{global_sale_enabled:enabled,global_sale_percent:percent,global_sale_starts_at:start.toISOString(),global_sale_ends_at:end.toISOString(),global_sale_promotion_id:promotionId,updated_at:new Date().toISOString()});
+  result={saved:true};break;
+ }
  case 'inventory-settings':{
   if(typeof payload.inventoryEnabled!=='boolean'||typeof payload.inventoryShowQuantity!=='boolean')invalid('Invalid stock control settings');
   await patch('gdsb_settings','id=eq.1',{inventory_enabled:payload.inventoryEnabled,inventory_show_quantity:payload.inventoryShowQuantity,updated_at:new Date().toISOString()});break;
