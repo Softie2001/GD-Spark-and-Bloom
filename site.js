@@ -327,7 +327,9 @@ function productsAdmin(){
        </div>
        <div class="gdsb-admin-product-stock">
         <span class="gdsb-admin-product-status ${p.enabled?'in':'out'}">${status}</span>
-        <span class="gdsb-admin-product-stock-mode">${stockLimited()?'Limited':'Normal selling'}</span>
+        <span class="gdsb-admin-product-stock-mode">${stockLimited()?'Limited stock':'Normal selling'}</span>
+       </div>
+       <div class="gdsb-admin-product-quantity-row">
         <label for="quantity-${esc(p.id)}">Available quantity</label>
         <div class="gdsb-admin-product-quantity"><input id="quantity-${esc(p.id)}" type="number" min="0" max="1000000" step="1" value="${availableUnits(p)}" inputmode="numeric" aria-label="Quantity for ${esc(p.name)}"><button class="mini-btn" type="button" onclick="saveProductQuantity('${esc(p.id)}')">Save</button></div>
        </div>
