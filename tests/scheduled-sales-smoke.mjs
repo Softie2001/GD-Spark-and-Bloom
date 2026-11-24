@@ -42,7 +42,8 @@ assert.equal(vm.runInContext('isSale(product,time)',ctx),true);
 ctx.time=now+61000;
 assert.equal(vm.runInContext('isSale(product,time)',ctx),false);
 assert.equal(vm.runInContext('saleState(product,time)',ctx),'Ended');
-assert.match(vm.runInContext('bannerAdmin()',ctx),/Schedule multiple product sale prices/);
+assert.match(vm.runInContext('bannerAdmin()',ctx),/Automatic percentage sale/);
+assert.doesNotMatch(vm.runInContext('bannerAdmin()',ctx),/Schedule multiple product sale prices/);
 assert.match(vm.runInContext('productFormAdmin()',ctx),/Sale ends \(date & time\)/);
 const live=fs.readFileSync('live.js','utf8'),server=fs.readFileSync('api/admin/mutate.js','utf8'),
  shop=fs.readFileSync('lib/shop.js','utf8'),migration=fs.readFileSync('supabase/migrations/gdsb_product_sale_schedules_20261118.sql','utf8');
