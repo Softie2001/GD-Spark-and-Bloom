@@ -12,6 +12,9 @@ const products=vm.runInContext('productsAdmin()',ctx),banner=vm.runInContext('ba
 assert.match(products,/Stock controls/);
 assert.match(products,/Add product/);
 assert.match(products,/gdsb-admin-product-card/);
+assert.match(products,/gdsb-admin-product-overview/);
+assert.match(products,/gdsb-admin-product-quantity-row/);
+assert.doesNotMatch(products,/gdsb-admin-product-body/);
 assert.match(products,/saveProductQuantity/);
 assert.match(products,/Available quantity/);
 assert.match(products,/Out of stock/);
@@ -23,14 +26,19 @@ assert.doesNotMatch(products,/Automatic percentage sale/);
 assert.doesNotMatch(products,/Schedule multiple product sale prices/);
 assert.doesNotMatch(products,/name="bulkSaleId"/);
 assert.match(banner,/Automatic percentage sale/);
-assert.match(banner,/Schedule multiple product sale prices/);
-assert.match(banner,/name="bulkSaleId"/);
-assert.match(banner,/Select all eligible products/);
-assert.match(banner,/Sample product/);
-assert.ok(banner.indexOf('Automatic percentage sale')<banner.indexOf('Schedule multiple product sale prices'));
+assert.doesNotMatch(banner,/Schedule multiple product sale prices/);
+assert.doesNotMatch(banner,/name="bulkSaleId"/);
+
+
+
+
+
 assert.doesNotMatch(products,/When enabled, enter each product/);
 assert.doesNotMatch(products,/Existing stock counts are kept/);
 assert.match(products,/Limit orders to the quantities entered/);
-assert.match(source,/selectAllBulkSaleProducts\(checked\)/);
-assert.match(source,/document.querySelectorAll\('input\[name="bulkSaleId"\]:checked'\)/);
-console.log('PASS | Products stays compact, sale management and product selection moved to Banners & sale, sale controls preserved');
+
+
+console.log('PASS | Compact no-gap product cards, bulk scheduler hidden, automatic sale retained and individual product sale editor preserved');
+
+assert.match(source,/Sale price \(₦\)/);
+assert.match(source,/Sale ends \(date & time\)/);

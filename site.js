@@ -283,32 +283,6 @@ function ordersAdmin(){
 function setInventoryMode(checked){db.inventoryEnabled=!!checked;db.products.forEach(p=>{p.stock=!!p.enabled&&(!stockLimited()||availableUnits(p)>0)});save();render();toast(checked?'Stock limits enabled':'Normal selling enabled')}
 function setStockVisibility(checked){db.inventoryShowQuantity=!!checked;save();render();toast(checked?'Storefront quantities shown':'Storefront quantities hidden')}
 function inventoryControls(){return `<section class="card gdsb-stock-controls" aria-labelledby="gdsb-stock-title"><div class="gdsb-stock-heading"><div><span class="gdsb-about-eyebrow">PRODUCT AVAILABILITY</span><h2 id="gdsb-stock-title">Stock controls</h2><p>Control product quantities during sales.</p></div><span class="status ${stockLimited()?'ok':'pending'}">${stockLimited()?'Limited stock':'Normal selling'}</span></div><div class="gdsb-stock-options"><label class="gdsb-stock-option"><input type="checkbox" ${stockLimited()?'checked':''} onchange="setInventoryMode(this.checked)"><span><strong>Enable stock limits</strong><small>Limit orders to the quantities entered for each product.</small></span></label><label class="gdsb-stock-option"><input type="checkbox" ${db.inventoryShowQuantity?'checked':''} ${!stockLimited()?'disabled':''} onchange="setStockVisibility(this.checked)"><span><strong>Show available numbers to customers</strong><small>${stockLimited()?'Display remaining quantities on the shop.':'Enable stock limits first.'}</small></span></label></div></section>`}
-function bulkSalePanel(){
- const eligible=db.products.filter(p=>Number(p.salePrice)>0&&Number(p.salePrice)<Number(p.price)).length;
- const banners=promoList().filter(c=>c.end).map(c=>`<option value="${esc(c.id)}">${esc(c.title)} · ${esc(promoDateLabel(c.end))}</option>`).join('');
- return `<section class="card admin-form-card" style="margin:20px 0"><h2 class="admin-panel-title">Schedule multiple product sale prices</h2>
- <p class="small-note">Select products below and schedule their existing sale prices together.</p>
- <form id="bulk-sale-form" onsubmit="scheduleBulkSale(event)">
- <div class="form-field"><label>Select products with sale prices</label><div style="display:flex;align-items:center;gap:10px;margin:8px 0 12px"><label><input type="checkbox" onchange="selectAllBulkSaleProducts(this.checked)"> Select all eligible products</label></div><div class="gdsb-sale-product-list" style="max-height:230px;overflow:auto;display:grid;grid-template-columns:repeat(auto-fit,minmax(185px,1fr));gap:8px;margin-bottom:18px">${db.products.filter(p=>Number(p.salePrice)>0&&Number(p.salePrice)<Number(p.price)).map(p=>`<label class="gdsb-sale-product-option" style="display:flex;gap:9px;align-items:center;padding:11px 12px;border:1px solid #e8dfc4;border-radius:12px"><input type="checkbox" name="bulkSaleId" value="${esc(p.id)}"><span>${esc(p.name)}</span></label>`).join('')||'<p class="small-note">Set a sale price on a product first.</p>'}</div></div><div class="form-field"><label>Use promotional banner dates (optional)</label><select name="saleCampaign" onchange="copySaleCampaignDates(this.value,'bulk-sale-form')"><option value="">Choose a banner or enter dates below</option>${banners}</select></div>
- <div class="form-grid">
- <div class="form-field"><label>Start date and time (optional)</label><input name="saleStart" type="datetime-local"></div>
- <div class="form-field"><label>End date and time *</label><input name="saleEnd" type="datetime-local" required></div>
- </div><button class="btn btn-primary" type="submit">Apply schedule to selected products</button>
- <p class="small-note">${eligible} products eligible. These dates are copied once; later banner edits do not change individual product schedules.</p>
- </form></section>`;
-}
-function selectAllBulkSaleProducts(checked){document.querySelectorAll('input[name="bulkSaleId"]:not(:disabled)').forEach(input=>input.checked=checked)}
-async function scheduleBulkSale(e){
- e.preventDefault();
- try{
-  const ids=[...document.querySelectorAll('input[name="bulkSaleId"]:checked')].map(input=>input.value);
-  if(!ids.length)throw Error('Select at least one product with a sale price');
-  const dates=saleDatePayload(new FormData(e.target));
-  if(!dates.saleEndsAt||Date.parse(dates.saleEndsAt)<=Date.now())throw Error('Choose a future sale end date and time');
-  db.products=db.products.map(p=>ids.includes(p.id)?{...p,...dates}:p);
-  save();render();toast('Sale schedule applied to '+ids.length+' products');
- }catch(error){toast(error.message)}
-}
 function productsAdmin(){
  const products=db.products||[];
  return `<div class="gdsb-products-top">
@@ -319,18 +293,17 @@ function productsAdmin(){
    const secondary=globalSaleActive()?'Global '+db.globalSale.percent+'% sale':saleState(p);
    return `<article class="gdsb-admin-product-card">
       <div class="gdsb-admin-product-heading"><img src="${esc(p.image||'')}" alt="" loading="lazy"><div><h3>${esc(p.name)}</h3><small>${esc(p.category)}${p.kit?' · Kit':''}</small></div></div>
-      <div class="gdsb-admin-product-body">
-       <div class="gdsb-admin-product-price">
-        ${hasDiscount(p)?`<del>${fmt(p.price)}</del>`:''}
-        <strong>${fmt(actualPrice(p))}</strong>
-        <small>${esc(secondary)}${p.saleEndsAt&& !globalSaleActive()?' · Ends '+esc(promoDateLabel(p.saleEndsAt)):''}</small>
-       </div>
-       <div class="gdsb-admin-product-stock">
+      <div class="gdsb-admin-product-overview">
+        <div class="gdsb-admin-product-price">
+          ${hasDiscount(p)?`<del>${fmt(p.price)}</del>`:''}
+          <strong>${fmt(actualPrice(p))}</strong>
+          ${secondary!=='Regular'?`<small>${esc(secondary)}${p.saleEndsAt&&!globalSaleActive()?' · Ends '+esc(promoDateLabel(p.saleEndsAt)):''}</small>`:''}
+        </div>
         <span class="gdsb-admin-product-status ${p.enabled?'in':'out'}">${status}</span>
-        <span class="gdsb-admin-product-stock-mode">${stockLimited()?'Limited':'Normal selling'}</span>
+      </div>
+      <div class="gdsb-admin-product-quantity-row">
         <label for="quantity-${esc(p.id)}">Available quantity</label>
         <div class="gdsb-admin-product-quantity"><input id="quantity-${esc(p.id)}" type="number" min="0" max="1000000" step="1" value="${availableUnits(p)}" inputmode="numeric" aria-label="Quantity for ${esc(p.name)}"><button class="mini-btn" type="button" onclick="saveProductQuantity('${esc(p.id)}')">Save</button></div>
-       </div>
       </div>
       <div class="gdsb-admin-product-actions">
        <button type="button" onclick="location.href='/admin-product?edit=${encodeURIComponent(p.id)}'">Edit</button>
@@ -410,7 +383,7 @@ function promotionCards(){
  </article>`).join('')
 }
 
-function bannerAdmin(){const h=db.heroBanner,p=promoList().find(x=>x.id===promoEditingId)||null,editing=!!p;return `${globalSalePanel()}${bulkSalePanel()}<div class="admin-banner-grid"><section class="card admin-form-card"><div class="section-kicker">Permanent storefront banner</div><h2 class="admin-panel-title">Hero banner</h2><p class="muted">This banner remains on the homepage until you replace it. Timed promotions temporarily take its place.</p><form onsubmit="saveHeroBanner(event)"><div class="form-field"><label>Hero heading *</label><input name="title" maxlength="90" required value="${esc(h.title)}"></div><div class="form-field"><label>Short supporting text</label><textarea name="subtitle" maxlength="160">${esc(h.subtitle||'')}</textarea></div><div class="form-field"><label>Hero image URL (optional)</label><input name="image" placeholder="https://..." value="${esc(h.image?.startsWith('data:')?'':h.image||'')}"></div><div class="form-field"><label>Or upload hero image (max 5 MB)</label><input name="imageUpload" type="file" accept="image/png,image/jpeg,image/webp"></div><button class="btn btn-primary" type="submit">Save permanent hero ${icon('arrow')}</button></form><img class="banner-preview" src="${esc(h.image||HERO_IMAGE)}" alt="Permanent banner preview"></section>
+function bannerAdmin(){const h=db.heroBanner,p=promoList().find(x=>x.id===promoEditingId)||null,editing=!!p;return `${globalSalePanel()}<div class="admin-banner-grid"><section class="card admin-form-card"><div class="section-kicker">Permanent storefront banner</div><h2 class="admin-panel-title">Hero banner</h2><p class="muted">This banner remains on the homepage until you replace it. Timed promotions temporarily take its place.</p><form onsubmit="saveHeroBanner(event)"><div class="form-field"><label>Hero heading *</label><input name="title" maxlength="90" required value="${esc(h.title)}"></div><div class="form-field"><label>Short supporting text</label><textarea name="subtitle" maxlength="160">${esc(h.subtitle||'')}</textarea></div><div class="form-field"><label>Hero image URL (optional)</label><input name="image" placeholder="https://..." value="${esc(h.image?.startsWith('data:')?'':h.image||'')}"></div><div class="form-field"><label>Or upload hero image (max 5 MB)</label><input name="imageUpload" type="file" accept="image/png,image/jpeg,image/webp"></div><button class="btn btn-primary" type="submit">Save permanent hero ${icon('arrow')}</button></form><img class="banner-preview" src="${esc(h.image||HERO_IMAGE)}" alt="Permanent banner preview"></section>
 <section class="card admin-form-card" id="gdsb-promo-editor">
   <div class="section-kicker">Scheduled campaigns</div>
   <h2 class="admin-panel-title">${editing?'Edit promotional banner':'Create promotional banner'}</h2>

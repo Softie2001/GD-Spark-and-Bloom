@@ -977,3 +977,30 @@ body.gdsb-order-confirm-open{overflow:hidden}
 .gdsb-admin-product-actions button:focus-visible{outline:3px solid #ffe000;outline-offset:2px}
 @media(max-width:850px){.gdsb-admin-product-grid{grid-template-columns:1fr}}
 @media(max-width:480px){.gdsb-admin-product-card{padding:15px;border-radius:17px;gap:13px}.gdsb-admin-product-heading img{width:55px;height:55px;flex-basis:55px}.gdsb-admin-product-heading h3{font-size:17px}.gdsb-admin-product-body{gap:10px}.gdsb-admin-product-price strong{font-size:21px}.gdsb-admin-product-actions button{font-size:13px;padding:12px 8px}.gdsb-admin-product-quantity{flex-wrap:wrap}.gdsb-admin-product-quantity .mini-btn{width:100%}}
+
+/* Product admin: compact information hierarchy, no empty two-column price gap. */
+.gdsb-admin-product-card{gap:12px;padding:16px 18px}
+.gdsb-admin-product-heading{gap:10px}
+.gdsb-admin-product-heading img{width:55px;height:55px;flex-basis:55px}
+.gdsb-admin-product-heading h3{font-size:17px;margin:0 0 3px}
+.gdsb-admin-product-overview{display:flex;align-items:flex-start;justify-content:space-between;gap:12px;min-width:0}
+.gdsb-admin-product-price{display:flex;flex-direction:column;gap:3px;min-width:0;padding:0}
+.gdsb-admin-product-price strong{font-size:clamp(19px,2vw,23px);line-height:1.25}
+.gdsb-admin-product-price del{font-size:13px;color:#777}
+.gdsb-admin-product-price small{font-size:11px;line-height:1.4;max-width:260px}
+.gdsb-admin-product-status{white-space:nowrap;flex-shrink:0;padding:7px 10px;font-size:11px;margin:2px 0 0}
+.gdsb-admin-product-quantity-row{display:flex;gap:12px;align-items:center;justify-content:space-between;min-width:0;padding-top:10px;border-top:1px solid #f0eee7}
+.gdsb-admin-product-quantity-row>label{font-size:12px;font-weight:700;color:#63665a;line-height:1.35}
+.gdsb-admin-product-quantity{width:min(58%,220px);flex-wrap:nowrap;gap:7px}
+.gdsb-admin-product-quantity input{width:100%;min-width:0;padding:9px 10px;font-size:14px}
+.gdsb-admin-product-quantity .mini-btn{width:auto;padding:10px 12px;font-size:12px}
+.gdsb-admin-product-actions{gap:8px}
+.gdsb-admin-product-actions button{min-height:39px;padding:9px;font-size:12px}
+@media(max-width:480px){
+ .gdsb-admin-product-card{padding:14px;gap:12px}
+ .gdsb-admin-product-overview{gap:10px}
+ .gdsb-admin-product-quantity-row{align-items:center;flex-direction:row}
+ .gdsb-admin-product-quantity{width:min(57%,200px);flex-wrap:nowrap}
+ .gdsb-admin-product-quantity .mini-btn{width:auto;flex:0 0 auto;padding:9px 12px}
+ .gdsb-admin-product-actions button{font-size:12px;min-height:39px}
+}
