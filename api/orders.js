@@ -1,4 +1,4 @@
-import {configured,body,method,onError,fail,required,tidy,checkPhone,decodeImage,uploadImage,newOrderRef,supa,patch,q,sendAdminMail,deleteReceipt} from '../lib/server.js';
+import {configured,body,method,onError,fail,required,tidy,checkPhone,decodeImage,uploadReceipt,newOrderRef,supa,patch,q,sendAdminMail,deleteReceipt} from '../lib/server.js';
 import {quote,settings} from '../lib/shop.js';
 import {randomUUID} from 'node:crypto';
 
@@ -14,8 +14,8 @@ export default async function handler(req,res){if(method(req,res,['POST']))retur
   const pricing=await quote(d);
   const receipt=decodeImage(d.receipt);
   const ref=typeof d.reference==='string'&&/^GD-[A-Z0-9-]{8,48}$/.test(d.reference)?d.reference:newOrderRef();
-  receiptPath=`${new Date().toISOString().slice(0,10)}/${randomUUID()}.${receipt.ext}`;
-  await uploadImage('gdsb-receipts',receiptPath,d.receipt);
+  receiptPath=`cloudinary/${new Date().toISOString().slice(0,10)}/${randomUUID()}.${receipt.ext}`;
+  await uploadReceipt(receiptPath,d.receipt);
   // One database transaction locks stock rows, reserves quantities, and inserts
   // the order + items together. A concurrent checkout cannot oversell stock.
   try {
