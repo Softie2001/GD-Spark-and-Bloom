@@ -3,7 +3,7 @@ import {quote,settings} from '../lib/shop.js';
 import {randomUUID} from 'node:crypto';
 
 export default async function handler(req,res){if(method(req,res,['POST']))return;if(!configured())return fail(res,503,'Store setup in progress');
- let receiptPath,orderId;
+ let receiptPath,orderId,orderCommitted=false;
  try{
   const d=body(req);if(typeof d.website==='string'&&d.website.trim())return fail(res,400,'Order could not be submitted. Please try again.');
   const customer=d.customer||{};
@@ -32,11 +32,12 @@ export default async function handler(req,res){if(method(req,res,['POST']))retur
    throw error;
   }
   if(typeof orderId!=='string'||!orderId)throw new Error('Could not record order');
+  orderCommitted=true;
   const notify=await sendAdminMail({...c,reference:ref,total:pricing.total}).catch(()=>({sent:false,error:'Email service unavailable'}));
   await patch('gdsb_orders',`id=eq.${q(orderId)}`,{notification_sent_at:notify.sent?new Date().toISOString():null,notification_error:notify.sent?null:notify.error}).catch(()=>{});
   res.setHeader('Cache-Control','no-store');return res.status(201).json({reference:ref,total:pricing.total,status:'Pending verification',notificationSent:notify.sent});
  }catch(err){
-  if(receiptPath)await deleteReceipt(receiptPath)
+  if(receiptPath&&!orderCommitted)await deleteReceipt(receiptPath)
   return onError(res,err)
  }
 }
