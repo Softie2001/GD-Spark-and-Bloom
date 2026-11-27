@@ -6,6 +6,6 @@ const id='gd-spark-bloom/receipts/2026-11-28/12345678-1234-1234-1234-123456789ab
 let calls=0;
 globalThis.fetch=async(url,opts)=>{calls++;assert.equal(opts.body.get('type'),'authenticated');assert.equal(opts.body.get('public_id'),id);assert.ok(opts.body.get('signature'));return {ok:true,json:async()=>url.endsWith('/upload')?{type:'authenticated',public_id:id}:{result:'ok'}}};
 await uploadReceipt(path,'data:image/jpeg;base64,'+Buffer.from([255,216,255,224,0,16]).toString('base64'));
-const url=new URL(await receiptUrl(path));assert.equal(url.searchParams.get('type'),'authenticated');assert.ok(url.searchParams.get('signature'));assert.ok(!url.href.includes('secret'));
+const url=new URL(await receiptUrl(path));assert.equal(url.searchParams.get('type'),'authenticated');assert.ok(url.searchParams.get('signature'));assert.equal(url.searchParams.get('attachment'),'false');assert.ok(Number(url.searchParams.get('expires_at'))>Date.now()/1000);assert.ok(!url.href.includes('secret'));
 await deleteReceiptStrict(path);assert.equal(calls,2);await assert.rejects(deleteReceiptStrict('../bad'));
 console.log('PASS private receipt routing and signing (mocked provider)');
