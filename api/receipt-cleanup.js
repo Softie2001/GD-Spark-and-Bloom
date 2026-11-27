@@ -1,8 +1,8 @@
 // GD Spark & Bloom: private 20-day receipt retention. Never deletes an order.
-import {configured,method,fail,rows,patch,q,clientHeaders} from '../lib/server.js';
+import {configured,method,fail,rows,patch,q,deleteReceiptStrict} from '../lib/server.js';
 
 const eligible=new Set(['Payment confirmed','Preparing order','Out for delivery','Delivered']);
-const safePath=/^\d{4}-\d{2}-\d{2}\/[0-9a-fA-F-]{36}\.(?:jpg|png|webp)$/;
+const safePath=/^(?:cloudinary\/)?\d{4}-\d{2}-\d{2}\/[0-9a-fA-F-]{36}\.(?:jpg|png|webp)$/;
 
 export default async function handler(req,res){
   if(method(req,res,['GET']))return;
@@ -25,12 +25,7 @@ export default async function handler(req,res){
         const current=await rows('gdsb_orders',`select=id,receipt_path,status,payment_confirmed_at,receipt_deleted_at&id=eq.${q(candidate.id)}&limit=1`);
         const order=current[0];
         if(!order||!eligible.has(order.status)||order.receipt_path!==candidate.receipt_path||order.receipt_deleted_at||!order.payment_confirmed_at||Date.parse(order.payment_confirmed_at)>Date.parse(cutoff))continue;
-        const path=order.receipt_path.split('/').map(encodeURIComponent).join('/');
-        // Supabase Storage API deletes actual bytes. SQL row deletion would orphan files.
-        const result=await fetch(`${process.env.SUPABASE_URL.replace(/\/$/,'')}/storage/v1/object/gdsb-receipts/${path}`,{
-          method:'DELETE',headers:clientHeaders(true)
-        });
-        if(!result.ok&&result.status!==404)throw Error(`Storage returned HTTP ${result.status}`);
+        await deleteReceiptStrict(order.receipt_path);
         // Keep the order, products, customer, status and totals. Remove only receipt metadata.
         const now=new Date().toISOString();
         const updated=await patch('gdsb_orders',`id=eq.${q(order.id)}&receipt_path=eq.${q(order.receipt_path)}&receipt_deleted_at=is.null&payment_confirmed_at=lte.${q(cutoff)}`,{

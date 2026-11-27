@@ -47,7 +47,7 @@ assert.doesNotMatch(vm.runInContext('bannerAdmin()',ctx),/Schedule multiple prod
 assert.match(vm.runInContext('productFormAdmin()',ctx),/Sale ends \(date & time\)/);
 const live=fs.readFileSync('live.js','utf8'),server=fs.readFileSync('api/admin/mutate.js','utf8'),
  shop=fs.readFileSync('lib/shop.js','utf8'),migration=fs.readFileSync('supabase/migrations/gdsb_product_sale_schedules_20261118.sql','utf8');
-assert.match(live,/product-sale-schedule/);
+assert.doesNotMatch(live,/product-sale-schedule/);
 assert.match(live,/saleDatePayload\(d\)/);
 assert.match(server,/case 'product-sale-schedule'/);
 assert.match(server,/await checkAdmin\(req\)/);
@@ -57,4 +57,4 @@ assert.match(migration,/ADD COLUMN IF NOT EXISTS sale_ends_at/);
 assert.doesNotMatch(migration,/UPDATE\s+public\.gdsb_products\s+SET\s+sale_price/i,'migration must preserve existing sale prices');
 assert.match(migration,/v_product\.sale_ends_at > now\(\)/,'atomic order placement must reject expired sale prices');
 assert.match(migration,/GRANT EXECUTE ON FUNCTION public\.gdsb_place_order\(jsonb,jsonb\) TO service_role/);
-console.log('PASS | Scheduled product sales, legacy prices, auto expiry, admin bulk scheduling, checkout evaluator, SEO, guarded migration');
+console.log('PASS | Scheduled product sales, legacy prices, auto expiry, individual scheduling, checkout evaluator, SEO, guarded migration');

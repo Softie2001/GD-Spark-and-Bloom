@@ -1,0 +1,12 @@
+name: Private receipt checks
+on: [push]
+permissions:
+  contents: read
+jobs:
+  test:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@11bd71901bbe5b1630ceea73d27597364c9af683
+      - run: npm run check
+      - run: node tests/private-receipts-smoke.mjs
+      - run: npm test

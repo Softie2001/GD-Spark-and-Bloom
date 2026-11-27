@@ -1,9 +1,9 @@
-import {configured,body,method,onError,fail,required,tidy,checkPhone,decodeImage,uploadImage,newOrderRef,supa,patch,q,sendAdminMail,deleteReceipt} from '../lib/server.js';
+import {configured,body,method,onError,fail,required,tidy,checkPhone,decodeImage,uploadReceipt,newOrderRef,supa,patch,q,sendAdminMail,deleteReceipt} from '../lib/server.js';
 import {quote,settings} from '../lib/shop.js';
 import {randomUUID} from 'node:crypto';
 
 export default async function handler(req,res){if(method(req,res,['POST']))return;if(!configured())return fail(res,503,'Store setup in progress');
- let receiptPath,orderId;
+ let receiptPath,orderId,orderCommitted=false;
  try{
   const d=body(req);if(typeof d.website==='string'&&d.website.trim())return fail(res,400,'Order could not be submitted. Please try again.');
   const customer=d.customer||{};
@@ -14,8 +14,8 @@ export default async function handler(req,res){if(method(req,res,['POST']))retur
   const pricing=await quote(d);
   const receipt=decodeImage(d.receipt);
   const ref=typeof d.reference==='string'&&/^GD-[A-Z0-9-]{8,48}$/.test(d.reference)?d.reference:newOrderRef();
-  receiptPath=`${new Date().toISOString().slice(0,10)}/${randomUUID()}.${receipt.ext}`;
-  await uploadImage('gdsb-receipts',receiptPath,d.receipt);
+  receiptPath=`cloudinary/${new Date().toISOString().slice(0,10)}/${randomUUID()}.${receipt.ext}`;
+  await uploadReceipt(receiptPath,d.receipt);
   // One database transaction locks stock rows, reserves quantities, and inserts
   // the order + items together. A concurrent checkout cannot oversell stock.
   try {
@@ -32,11 +32,12 @@ export default async function handler(req,res){if(method(req,res,['POST']))retur
    throw error;
   }
   if(typeof orderId!=='string'||!orderId)throw new Error('Could not record order');
+  orderCommitted=true;
   const notify=await sendAdminMail({...c,reference:ref,total:pricing.total}).catch(()=>({sent:false,error:'Email service unavailable'}));
   await patch('gdsb_orders',`id=eq.${q(orderId)}`,{notification_sent_at:notify.sent?new Date().toISOString():null,notification_error:notify.sent?null:notify.error}).catch(()=>{});
   res.setHeader('Cache-Control','no-store');return res.status(201).json({reference:ref,total:pricing.total,status:'Pending verification',notificationSent:notify.sent});
  }catch(err){
-  if(receiptPath)await deleteReceipt(receiptPath)
+  if(receiptPath&&!orderCommitted)await deleteReceipt(receiptPath)
   return onError(res,err)
  }
 }
